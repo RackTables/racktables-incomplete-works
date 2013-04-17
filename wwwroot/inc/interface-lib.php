@@ -281,13 +281,13 @@ $page_by_realm['ipv4rspool'] = 'ipv4slb';
 $page_by_realm['file'] = 'files';
 $page_by_realm['user'] = 'userlist';
 
-function printSelect ($optionList, $select_attrs = array(), $selected_id = NULL)
+function printSelect ($optionList, $select_attrs = array(), $selected_id = NULL,$classes='')
 {
-	echo getSelect ($optionList, $select_attrs, $selected_id);
+	echo getSelect ($optionList, $select_attrs, $selected_id,TRUE,$classes);
 }
 
 // Input array keys are OPTION VALUEs and input array values are OPTION text.
-function getSelect ($optionList, $select_attrs = array(), $selected_id = NULL, $treat_single_special = TRUE)
+function getSelect ($optionList, $select_attrs = array(), $selected_id = NULL, $treat_single_special = TRUE,$classes='')
 {
 	$ret = '';
 	if (!array_key_exists ('name', $select_attrs))
@@ -302,7 +302,7 @@ function getSelect ($optionList, $select_attrs = array(), $selected_id = NULL, $
 	}
 	if (!array_key_exists ('id', $select_attrs))
 		$select_attrs['id'] = $select_attrs['name'];
-	$ret .= '<select';
+	$ret .= '<select class="' . $classes . '"';
 	foreach ($select_attrs as $attr_name => $attr_value)
 		$ret .= " ${attr_name}=${attr_value}";
 	$ret .= '>';
@@ -312,19 +312,20 @@ function getSelect ($optionList, $select_attrs = array(), $selected_id = NULL, $
 	return $ret;
 }
 
-function printNiftySelect ($groupList, $select_attrs = array(), $selected_id = NULL, $autocomplete = false)
+function printNiftySelect ($groupList, $select_attrs = array(), $selected_id = NULL, $tree = false,$classes='')
 {
-	echo getNiftySelect ($groupList, $select_attrs, $selected_id);
+	echo getNiftySelect ($groupList, $select_attrs, $selected_id , $tree ,$classes);
 }
 
 // Input is a cooked list of OPTGROUPs, each with own sub-list of OPTIONs in the same
 // format as printSelect() expects.
 // If tree is true, hierarchical drop-boxes are used, otherwise optgroups are used.
-function getNiftySelect ($groupList, $select_attrs, $selected_id = NULL, $tree = false)
+function getNiftySelect ($groupList, $select_attrs, $selected_id = NULL, $tree = false,$classes='')
 {
+
 	// special treatment for ungrouped data
 	if (count ($groupList) == 1 and isset ($groupList['other']))
-		return getSelect ($groupList['other'], $select_attrs, $selected_id);
+		return getSelect ($groupList['other'], $select_attrs, $selected_id,true,$classes);
 	if (!array_key_exists ('name', $select_attrs))
 		return '';
 	if (!array_key_exists ('id', $select_attrs))
@@ -352,7 +353,7 @@ function getNiftySelect ($groupList, $select_attrs, $selected_id = NULL, $tree =
 	}
 	else
 	{
-		$ret = '<select';
+		$ret = '<select class="'. $classes . '" ';
 		foreach ($select_attrs as $attr_name => $attr_value)
 			$ret .= " ${attr_name}=${attr_value}";
 		$ret .= ">\n";
@@ -412,36 +413,57 @@ function getOptionTree ($tree_name, $tree_options, $tree_config = array())
 	return $ret;
 }
 
-function printImageHREF ($tag, $title = '', $do_input = FALSE, $tabindex = 0)
+function printImageHREF ($tag, $title = '', $do_input = FALSE, $tabindex = 0,$classes='')
 {
-	echo getImageHREF ($tag, $title, $do_input, $tabindex);
+	echo getImageHREF ($tag, $title, $do_input, $tabindex,$classes);
 }
 
-// this would be better called mkIMG(), make "IMG" HTML element
-function getImageHREF ($tag, $title = '', $do_input = FALSE, $tabindex = 0)
+function printImage ($tag, $title = '', $do_input = FALSE, $tabindex = 0) {
+	echo getImage($tag,$title,$do_input,$tabindex);
+}
+
+function getImage ($tag, $title = '', $do_input = FALSE, $tabindex = 0)
 {
+	 if (strlen($tag) > 2 && !strncmp($tag, 'i:', 2)) {
+		list($ident,$tag) = explode(':',$tag,2);
+		return '<i class="icon-' . $tag . '"></i>';
+	 }
+
 	global $image;
+
 	if (!isset ($image[$tag]))
 		$tag = 'error';
 	$img = $image[$tag];
 	$img['path'] = '?module=chrome&uri=' . $img['path'];
-	if ($do_input == TRUE)
-		return
-			"<input type=image name=submit class=icon " .
-			"src='${img['path']}' " .
-			"border=0 " .
-			($tabindex ? "tabindex=${tabindex}" : '') .
-			(!strlen ($title) ? '' : " title='${title}'") . // JT: Add title to input hrefs too
-			">";
-	else
-		return
-			"<img " .
+
+	return "<img " .
 			"src='${img['path']}' " .
 			"width=${img['width']} " .
 			"height=${img['height']} " .
-			"border=0 " .
-			(!strlen ($title) ? '' : "title='${title}'") .
-			">";
+			"border=0>";
+}
+
+
+// this would be better called mkIMG(), make "IMG" HTML element
+function getImageHREF ($tag, $title = '', $do_input = FALSE, $tabindex = 0,$classes='')
+{
+	$buttonstatus = ($do_input == TRUE)?'':'disabled="disabled"';
+
+	if (strlen($title) > 2 && !strncmp($title, 't:', 2)) {
+		list($ident,$title) = explode(':',$title,2);
+
+		return
+		"<button data-toggle='tooltip' title='{$title}' class='btn {$classes}' type='submit' {$buttonstatus} name=submit " .
+		($tabindex ? "tabindex=${tabindex}" : '') .
+		">" . getImage($tag). "</button>";
+
+	}
+
+	return
+			"<button  class='btn {$classes}' type='submit' {$buttonstatus} name=submit " .
+			($tabindex ? "tabindex=${tabindex}" : '') .
+			">" . getImage($tag) .(($title)?'&nbsp;'.$title:'') . "</button>";
+
 }
 
 function dos2unix ($text)
@@ -519,7 +541,7 @@ function addJS ($data, $inline = FALSE, $group = 'default')
 		(
 			'a_core' => array
 			(
-				array('type' => 'file', 'script' => 'js/jquery-1.4.4.min.js'),
+		//		array('type' => 'file', 'script' => 'js/jquery-1.9.1.min.js'),
 				array('type' => 'file', 'script' => 'js/racktables.js'),
 			),
 		);
@@ -624,20 +646,27 @@ function getRenderedIPv4NetCapacity ($range)
 
 		$title_items = array();
 		$title2_items = array();
+		$done =0;
 		if ($a_total != 0)
 		{
 			$title_items[] = "$a_used / $a_total";
 			$title2_items[] = sprintf ("%d%% used", bcdiv ($a_used, $a_total, 4) * 100);
+			$done =  bcdiv ($a_used, $a_total, 4) * 100;
 		}
 		if ($b_total != 0)
 		{
 			$title_items[] = ($b_used ? "$b_used / " : "") . $b_total;
 			$title2_items[] = sprintf ("%d%% sub-allocated", bcdiv ($b_total, $total, 4) * 100);
+			$done =  bcdiv ($b_total, $total, 4) * 100;
 		}
 		$title = implode (', ', $title_items);
 		$title2 = implode (', ', $title2_items);
-		$text = "<img width='$width' height=10 border=0 title='$title2' src='?module=progressbar4&px1=$px1&px2=$px2&px3=$px3'>" .
-			" <small class='title'>$title</small>";
+
+
+
+		$text = '<div class="progress pull-left" title="' . $title2 . '" style="width:100px;margin-top:6px;margin-bottom:6px;"><div class="bar" style="width: '.$done.'%;"></div></div><small style="padding-left:5px;" class="title">' . $title . '</small>';
+
+		//$text = "<img width='$width' height=10 border=0 title='$title2' src='?module=progressbar4&px1=$px1&px2=$px2&px3=$px3'><small class='title'>$title</small>";
 	}
 	else
 	{
@@ -774,26 +803,28 @@ function serializeTags ($chain, $baseurl = '')
 	foreach ($chain as $taginfo)
 	{
 		if ($baseurl == '')
-			$tmp[] = $taginfo['tag'];
+			$tmp[] = "<span class='badge'>{$taginfo['tag']}</span>";
 		else
 		{
 			$title = '';
-			if (isset ($taginfo['user']) and isset ($taginfo['time']))
+			if (isset ($taginfo['user']) and isset ($taginfo['time'])) {
 				$title = 'title="' . htmlspecialchars ($taginfo['user'] . ', ' . formatAge ($taginfo['time']), ENT_QUOTES) . '"';
-			$tmp[] = "<a $title href='${baseurl}cft[]=${taginfo['id']}'>" . $taginfo['tag'] . "</a>";
+			}
+			$tmp[] = "<a data-toggle='tooltip' $title href='${baseurl}cft[]=${taginfo['id']}'><span class='badge'>" . $taginfo['tag'] . "</span></a>";
 		}
 	}
-	return implode (', ', $tmp);
+	return implode ('', $tmp);
 }
 
-function startPortlet ($title = '')
+function startPortlet ($title = '',$width=8,$extraclass='')
 {
-	echo "<div class=portlet><h2>${title}</h2>";
+	echo "<div class='span${width} portlet'><div class='box'><div class='box-header'><span class='title'>${title}</span></div><div class='box-content {$extraclass}'>";
 }
 
-function finishPortlet ()
+function finishPortlet ($withdivide=false)
 {
-	echo "</div>\n";
+	echo (($withdivide==false)?'':'<hr/>');
+	echo "</div></div></div>";
 }
 
 function getPageName ($page_code)
@@ -809,18 +840,18 @@ function printTagTRs ($cell, $baseurl = '')
 {
 	if (getConfigVar ('SHOW_EXPLICIT_TAGS') == 'yes' and count ($cell['etags']))
 	{
-		echo "<tr><th width='50%' class=tagchain>Explicit tags:</th><td class=tagchain>";
-		echo serializeTags ($cell['etags'], $baseurl) . "</td></tr>\n";
+		echo "<dt>Explicit tags:</dt><dd>";
+		echo serializeTags ($cell['etags'], $baseurl) . "</dd>";
 	}
 	if (getConfigVar ('SHOW_IMPLICIT_TAGS') == 'yes' and count ($cell['itags']))
 	{
-		echo "<tr><th width='50%' class=tagchain>Implicit tags:</th><td class=tagchain>";
-		echo serializeTags ($cell['itags'], $baseurl) . "</td></tr>\n";
+		echo "<dt>Implicit tags:</dt><dd>";
+		echo serializeTags ($cell['itags'], $baseurl) . "</dd>\n";
 	}
 	if (getConfigVar ('SHOW_AUTOMATIC_TAGS') == 'yes' and count ($cell['atags']))
 	{
-		echo "<tr><th width='50%' class=tagchain>Automatic tags:</th><td class=tagchain>";
-		echo serializeTags ($cell['atags']) . "</td></tr>\n";
+		echo "<dt>Automatic tags:</dt><dd>";
+		echo serializeTags ($cell['atags']) . "</dd>\n";
 	}
 }
 
@@ -836,14 +867,14 @@ function modifyEntitySummary ($cell, $summary)
 // 'tags' key has a special meaning: instead of value, the result of printTagTRs call is appended to output
 // if the value is a single-element array, its value rendered as-is instead of <tr> tag and all its contents.
 // if the value is an array, its first 2 items are treated as left and right contents of row, no colon is appended. Used to enable non-unique titles
-function renderEntitySummary ($cell, $title, $values = array())
+function renderEntitySummary ($cell, $title, $values = array(),$width=8)
 {
 	global $page_by_realm;
 	// allow plugins to override summary table
 	$values = callHook ('modifyEntitySummary', $cell, $values);
 
-	startPortlet ($title);
-	echo "<table border=0 cellspacing=0 cellpadding=3 width='100%'>\n";
+	startPortlet ($title,$width,'hpadded');
+	echo '<dl class="dl-horizontal">';
 	foreach ($values as $name => $value)
 	{
 		if (is_array ($value) and count ($value) == 1)
@@ -874,19 +905,67 @@ function renderEntitySummary ($cell, $title, $values = array())
 			printTagTRs ($cell, $baseurl);
 		}
 		else
-			echo "<tr><th width='50%' class='$class'>$name</th><td class=tdleft>$value</td></tr>";
+			echo "<dt>$name</dt><dd>$value</dd>";
 	}
-	echo "</table>\n";
+	echo '</dl>';
 	finishPortlet();
 }
+
+// Display hrefs for all of a file's parents. If scissors are requested,
+// prepend cutting button to each of them.
+function serializeFileLinks ($links, $scissors = FALSE)
+{
+	$comma = '';
+	$ret = '';
+	foreach ($links as $link_id => $li)
+	{
+		switch ($li['entity_type'])
+		{
+			case 'ipv4net':
+				$params = "page=ipv4net&id=";
+				break;
+			case 'ipv6net':
+				$params = "page=ipv6net&id=";
+				break;
+			case 'ipv4rspool':
+				$params = "page=ipv4rspool&pool_id=";
+				break;
+			case 'ipv4vs':
+				$params = "page=ipv4vs&vs_id=";
+				break;
+			case 'object':
+				$params = "page=object&object_id=";
+				break;
+			case 'rack':
+				$params = "page=rack&rack_id=";
+				break;
+			case 'location':
+				$params = "page=location&location_id=";
+				break;
+			case 'user':
+				$params = "page=user&user_id=";
+				break;
+		}
+		$ret .= $comma;
+		if ($scissors)
+		{
+			$ret .= "<a class='btn' href='" . makeHrefProcess(array('op'=>'unlinkFile', 'link_id'=>$link_id)) . "'>";
+			$ret .= getImage ('i:resize-full') . '</a> ';
+		}
+		$ret .= sprintf("<a href='index.php?%s%s'>%s</a>", $params, $li['entity_id'], $li['name']);
+		$comma = '<br>';
+	}
+	return $ret;
+}
+
 
 function getOpLink ($params, $title,  $img_name = '', $comment = '', $class = '')
 {
 	if (isset ($params))
-		$ret = '<a href="' . makeHrefProcess ($params) . '"';
+		$ret = '<a class="btn" href="' . makeHrefProcess ($params) . '"';
 	else
 	{
-		$ret = '<a href="#" onclick="return false;"';
+		$ret = '<a class="btn" href="#" onclick="return false;"';
 		$class .= ' noclick';
 	}
 	if (! empty ($comment))
@@ -899,7 +978,7 @@ function getOpLink ($params, $title,  $img_name = '', $comment = '', $class = ''
 	$ret .= '>';
 	if (! empty ($img_name))
 	{
-		$ret .= getImageHREF ($img_name, $comment);
+		$ret .= getImage ($img_name) . '&nbsp;' . $comment;
 		if (! empty ($title))
 			$ret .= ' ';
 	}
@@ -925,7 +1004,10 @@ function getProgressBar ($percentage = 0, $theme = '', $inline = FALSE)
 		$_REQUEST = $bk_request;
 		header ('Content-type: text/html');
 	}
-	$ret = "<img width=100 height=10 border=0 title='${done}%' src='$src'>";
+	$ret = "<img width=150 height=10 border=0 title='${done}%' src='$src'>";
+
+	return'<div class="progress" style="width:150px;margin-top:6px;margin-bottom:6px;"><div class="bar" style="width: '.$done.'%;"></div></div>';
+
 	return $ret;
 }
 
@@ -942,9 +1024,9 @@ function renderNetVLAN ($cell)
 
 function includeJQueryUI ($do_css = TRUE)
 {
-	addJS ('js/jquery-ui-1.8.21.min.js');
+/*	addJS ('js/jquery-ui.min.js');
 	if ($do_css)
-		addCSS ('css/jquery-ui-1.8.22.redmond.css');
+		addCSS ('css/jquery-ui.min.css');*/
 }
 
 function getRenderedIPPortPair ($ip, $port = NULL)
@@ -958,11 +1040,11 @@ function getRenderedIPPortPair ($ip, $port = NULL)
 // Print common operation form prologue, include bypass argument, if
 // appropriate, and some extra hidden inputs, if requested.
 // Use special encoding for upload forms
-function printOpFormIntro ($opname, $extra = array(), $upload = FALSE)
+function printOpFormIntro ($opname, $extra = array(), $upload = FALSE, $classes='')
 {
 	global $pageno, $tabno, $page;
 
-	echo "<form method=post id=${opname} name=${opname} action='?module=redirect&page=${pageno}&tab=${tabno}&op=${opname}'";
+	echo "<form class='form-horizontal {$classes}' method=post id=${opname} name=${opname} action='?module=redirect&page=${pageno}&tab=${tabno}&op=${opname}'";
 	if ($upload)
 		echo " enctype='multipart/form-data'";
 	echo ">";

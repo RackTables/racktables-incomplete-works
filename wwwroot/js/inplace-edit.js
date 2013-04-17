@@ -13,16 +13,12 @@ var btn = null;
 
 $(document).ready (function() {
 	$(editable_filter).each (function (i, iSpan) {
-		var container = $('<div class="edit-container"/>')
-			.mouseover(onSpanMouseOver);
 		$(iSpan)
-			.after (container)
-			.detach()
-			.appendTo (container);
-		container
+			.closest('td')
+			.mouseover(onSpanMouseOver)
 			.append
 			(
-				$('<div class="empty" style="margin-left: 10px; width:12px; height:12px;"><img class="edit-btn" src="?module=chrome&uri=pix/pencil-icon.png" title="Edit text" /></div>')
+				$('<span class="pull-left"><i style="display:none;" class="edit-btn icon-pencil"></i></span>')
 				.click(onPencilClick)
 			);
 	});
@@ -33,7 +29,7 @@ function onSpanMouseOver (event) {
 	if (editMode)
 		return;
 	stop_propagation = true;
-	var pen = $(event.target).closest('.edit-container').find('.edit-btn');
+	var pen = $(event.target).closest('td').find('.edit-btn');
 	if (! visible_pen.length || visible_pen[0] != pen[0]) {
 		visible_pen.hide();
 		visible_pen = pen;
@@ -59,7 +55,7 @@ function hideEditForm () {
 
 function onPencilClick (event) {
 	// hide original plain text comment
-	span = $(event.target).closest('.edit-container').find(editable_filter);
+	span = $(event.target).closest('td').find(editable_filter);
 	var width = span[0].offsetWidth + 50;
 	if (width < 150)
 		width = 150;
@@ -70,8 +66,8 @@ function onPencilClick (event) {
 	editMode = true;
 
 	// construct editor form
-	group = $('<span class="reservation-form" />');
-	input = $('<input type="text" />')
+	group = $('<div class="reservation-form input-append input-flush" />');
+	input = $('<input style="width:100%;" type="text" />')
 		.val(span.html().replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>'))
 		.css('width', '' + width + 'px')
 		.keydown(
@@ -83,8 +79,8 @@ function onPencilClick (event) {
 					hideEditForm();
 			})
 		.appendTo(group);
-	group.append('&nbsp;');
-	btn = $('<img src="?module=chrome&uri=pix/tango-document-save-16x16.png" title="Save changes" />')
+//	group.append('&nbsp;');
+	btn = $('<button class="btn" type="button"><i class="icon-pencil"></i></button>')
 		.css('cursor', 'pointer')
 		.click( onFormSubmit )
 		.appendTo(group);
@@ -117,7 +113,7 @@ function doSetCaretPosition (input, iCaretPos) {
 function onFormSubmit () {
 	var text = input.val();
 	input.attr('disabled', 'true');
-	btn.replaceWith('<img src="?module=chrome&uri=pix/ajax-loader.gif" title="Please wait" />');
+	btn.find('i').replaceWith('<img class="input-flush" src="?module=chrome&uri=pix/ajax-loader.gif" title="Please wait" />');
 	waiting_response = true;
 
 	var op = '';
