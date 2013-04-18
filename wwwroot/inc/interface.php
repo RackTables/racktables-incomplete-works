@@ -201,7 +201,7 @@ function renderIndexItem ($ypageno) {
 		foreach ($args as $param_name => $param_value)
 			echo "&" . urlencode ($param_name) . '=' . urlencode ($param_value);
 
-		echo "'><span class='label label-info'>${tabtitle}</span></a>&nbsp;";
+		echo "'><span style='margin-right:2px;' class='label label-info'>${tabtitle}</span></a>";
 	}
 
 	echo "</p><hr>";
@@ -854,8 +854,8 @@ function renderEditObjectForm()
 	global $pageno, $virtual_obj_types;
 	$object_id = getBypassValue();
 	$object = spotEntity ('object', $object_id);
-	startPortlet ('Attributes',12);
-	printOpFormIntro ('update');
+	startPortlet ('Attributes',12,'tpadded');
+	printOpFormIntro ('update',array(),false,'form-flush');
 
 	// static attributes
 	echo '<div class="control-group"><label class="control-label" for="inputEmail">Type:</label><div class="controls">';
@@ -890,16 +890,16 @@ function renderEditObjectForm()
 		{
 			if (!isset($label))
 				$label = count($parents) > 1 ? 'Containers:' : 'Container:';
-			echo '<div class="control-group"><label class="control-label" for="inputEmail">' .  ${label} . '</label><div class="controls">';
+			echo '<div class="control-group"><label class="control-label" for="inputEmail">' .  $label . '</label><div class="controls">';
 			echo "<a href='".makeHref(array('page'=>'object', 'object_id'=>$parent_details['entity_id']))."'>${parent_details['name']}</a>";
 			echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
-			echo "<a href='".
+			echo "<a class='btn' data-toggle='tooltip' title='Unlink container' href='".
 				makeHrefProcess(array(
 					'op'=>'unlinkEntities',
 					'link_id'=>$link_id)).
 
 			"'>";
-			printImageHREF ('cut', 'Unlink container');
+			printImage ('i:resize-full');
 			echo "</a>";
 			echo'</div></div>';
 			$label = '&nbsp;';
@@ -992,11 +992,11 @@ function renderEditObjectForm()
 	echo "</form>";
 	finishPortlet();
 
-	echo '<table border=0 width=100%><tr><td>';
+
 	startPortlet ('History',12);
 	renderObjectHistory ($object_id);
 	finishPortlet();
-	echo '</td></tr></table>';
+
 }
 
 // This is a clone of renderEditObjectForm().
@@ -1321,9 +1321,9 @@ function renderObject ($object_id)
 		startPortlet ('IP addresses');
 		echo "<table cellspacing=0 cellpadding='5' align='center' class='table table-striped'>\n";
 		if (getConfigVar ('EXT_IPV4_VIEW') == 'yes')
-			echo "<tr><th>OS interface</th><th>IP address</th><th>Network</th><th>Routed by</th><th>Peers</th></tr>\n";
+			echo "<thead><tr><th>OS interface</th><th>IP address</th><th>Network</th><th>Routed by</th><th>Peers</th></tr></thead>";
 		else
-			echo "<tr><th>OS interface</th><th>IP address</th><th>peers</th></tr>\n";
+			echo "<thead><tr><th>OS interface</th><th>IP address</th><th>peers</th></tr></thead>";
 
 		// group IP allocations by interface name instead of address family
 		$allocs_by_iface = array();
@@ -1978,7 +1978,7 @@ function renderRackSpaceForObject ($object_id)
 	// Main layout starts.
 
 	echo '<div class="span6"><div class="row">';
-	startPortlet ('Racks',6);
+	startPortlet ('Racks',6,'padded');
 	$allRacksData = listCells ('rack');
 
 	// filter rack list to match only racks having common tags with the object (reducing $allRacksData)
@@ -2021,14 +2021,14 @@ function renderRackSpaceForObject ($object_id)
 			}
 	foreach (array_keys ($workingRacksData) as $rackId)
 		applyObjectMountMask ($workingRacksData[$rackId], $object_id);
-	printOpFormIntro ('updateObjectAllocation');
+	printOpFormIntro ('updateObjectAllocation',array(),null,'form-flush');
 	renderRackMultiSelect ('rackmulti[]', $allRacksData, array_keys ($workingRacksData));
 	finishPortlet();
 	echo '</div><div class="row">';
 
-	startPortlet ('Comment (for History)',6);
+	startPortlet ('Comment (for History)',6,'padded');
 	echo "<textarea name=comment rows=10 style='width:100%;'></textarea><br>\n";
-	echo "<input class='btn' type=submit value='Save' name=got_atoms>\n";
+	echo "<button class='btn' type='submit'  name=got_atoms>" . getImage('i:ok') . " Save</button>";
 	finishPortlet();
 
 	echo '</div></div>';
@@ -2235,7 +2235,7 @@ function renderRackspaceHistory ()
 		list ($omid, $nmid) = getOperationMolecules ($op_id);
 
 	echo '<div class="span12"><div class="row">';
-	startPortlet ('Old allocation',6);
+	startPortlet ('Old allocation',6,'padded');
 	if ($omid)
 	{
 		$oldMolecule = getMolecule ($omid);
@@ -2247,7 +2247,7 @@ function renderRackspaceHistory ()
 
 
 	// Right top portlet with new allocation
-	startPortlet ('New allocation',6);
+	startPortlet ('New allocation',6,'padded');
 	if ($nmid)
 	{
 		$newMolecule = getMolecule ($nmid);
@@ -2261,7 +2261,7 @@ function renderRackspaceHistory ()
 
 	startPortlet ('Rackspace allocation history',12);
 	echo "<table border=0 cellpadding=5 cellspacing=0 align=center class='table table-striped'>\n";
-	echo "<tr><th>Timestamp</th><th>Author</th><th>Object</th><th>Comment</th></tr>\n";
+	echo "<thead><tr><th>Timestamp</th><th>Author</th><th>Object</th><th>Comment</th></tr></thead>";
 	foreach ($history as $row)
 	{
 		if ($row['mo_id'] == $op_id)
@@ -3919,11 +3919,13 @@ function renderObjectParentCompatEditor()
 function renderConfigMainpage ()
 {
 	global $pageno, $page;
+	startPortlet('Configuration',12,'padded');
 	echo '<ul>';
 	foreach ($page as $cpageno => $cpage)
 		if (isset ($cpage['parent']) and $cpage['parent'] == $pageno  && permitted($cpageno))
 			echo "<li><a href='index.php?page=${cpageno}'>" . $cpage['title'] . "</li>\n";
 	echo '</ul>';
+	finishPortlet();
 }
 
 function renderLocationPage ($location_id)
@@ -4561,10 +4563,13 @@ function renderReports ($what)
 {
 	if (!count ($what))
 		return;
-	echo "<table align=center>\n";
+
 	foreach ($what as $item)
 	{
-		echo "<tr><th colspan=2><h3>${item['title']}</h3></th></tr>\n";
+		startPortlet($item['title'],12);
+		if ('custom' !== $item['type']) {
+			echo '<dl class="dl-horizontal">';
+		}
 		switch ($item['type'])
 		{
 			case 'counters':
@@ -4573,7 +4578,7 @@ function renderReports ($what)
 				else
 					$data = $item['func'] ();
 				foreach ($data as $header => $data)
-					echo "<tr><td class=tdright>${header}:</td><td class=tdleft>${data}</td></tr>\n";
+					echo "<dt style='width:300px;'>${header}:</dt><dd style='margin-left:320px;'>${data}</dd>";
 				break;
 			case 'messages':
 				if (array_key_exists ('args', $item))
@@ -4581,7 +4586,7 @@ function renderReports ($what)
 				else
 					$data = $item['func'] ();
 				foreach ($data as $msg)
-					echo "<tr class='msg_${msg['class']}'><td class=tdright>${msg['header']}:</td><td class=tdleft>${msg['text']}</td></tr>\n";
+					echo "<dt style='width:300px;'>${msg['header']}:</dt><dd style='margin-left:320px;'>${msg['text']}</dd>\n";
 				break;
 			case 'meters':
 				if (array_key_exists ('args', $item))
@@ -4590,29 +4595,29 @@ function renderReports ($what)
 					$data = $item['func'] ();
 				foreach ($data as $meter)
 				{
-					echo "<tr><td class=tdright>${meter['title']}:</td><td class=tdcenter>";
+					echo "<dt style='width:300px;'>${meter['title']}:</dt><dd style='margin-left:320px;'><div style='margin-right:10px;' class='pull-left'>";
 					renderProgressBar ($meter['max'] ? $meter['current'] / $meter['max'] : 0);
-					echo '<br><small>' . ($meter['max'] ? $meter['current'] . '/' . $meter['max'] : '0') . '</small></td></tr>';
+					echo '</div><small>' . ($meter['max'] ? $meter['current'] . '/' . $meter['max'] : '0') . '</small></dd>';
 				}
 				break;
 			case 'custom':
-				echo "<tr><td colspan=2>";
 				$item['func'] ();
-				echo "</td></tr>\n";
 				break;
 			default:
 				throw new InvalidArgException ('type', $item['type']);
 		}
-		echo "<tr><td colspan=2><hr></td></tr>\n";
+		if ('custom' !== $item['type']) {
+			echo '</dl>';
+		}
+		finishPortlet();
 	}
-	echo "</table>\n";
 }
 
 function renderTagStats ()
 {
 	global $taglist;
-	echo '<table border=1><tr><th>tag</th><th>total</th><th>objects</th><th>IPv4 nets</th><th>IPv6 nets</th>';
-	echo '<th>racks</th><th>IPv4 VS</th><th>IPv4 RS pools</th><th>users</th><th>files</th></tr>';
+	echo '<table class="table table-striped"><thead><tr><th>Tag</th><th>Total</th><th>Objects</th><th>IPv4 nets</th><th>IPv6 nets</th>';
+	echo '<th>Racks</th><th>IPv4 VS</th><th>IPv4 RS pools</th><th>Users</th><th>Files</th></tr></thead>';
 	$pagebyrealm = array
 	(
 		'file' => 'files&tab=default',
@@ -6018,14 +6023,9 @@ function renderCell ($cell)
 		echo "</td></tr></table>";
 		break;
 	case 'object':
-		echo "<table class='slbcell vscell'><tr><td rowspan=2 width='5%'>";
-		printImageHREF ('OBJECT');
-		echo '</td>';
-		echo "<td><a href='index.php?page=object&object_id=${cell['id']}'>";
-		echo "<strong>" . niftyString ($cell['dname']) . "</strong></a></td></tr>";
-		echo '<td>';
+		echo "<div><a href='index.php?page=object&object_id=${cell['id']}'>";
+		echo "<strong>" . niftyString ($cell['dname']) . "</strong></a></div>";
 		echo count ($cell['etags']) ? ("<small>" . serializeTags ($cell['etags']) . "</small>") : '&nbsp;';
-		echo "</td></tr></table>";
 		break;
 	default:
 		throw new InvalidArgException ('realm', $cell['realm']);
@@ -8425,8 +8425,7 @@ END
 function renderObjectLogEditor ()
 {
 	global $nextorder;
-
-	echo "<div class='span12'><h4>Log records for this object (<a href=?page=objectlog>complete list</a>)</h4>";
+	startPortlet('Log records for this object (<a href=?page=objectlog>complete list</a>)',12);
 	printOpFormIntro ('add');
 	echo "<table class='table table-striped'>";
 	echo "<thead><tr><th style='width:140px;'>Date</th><th>Log</th><th style='width:32px;'>Tasks</th></tr></thead><tr valign=top class=row_odd>";
@@ -8446,7 +8445,8 @@ function renderObjectLogEditor ()
 		echo "</a></td></tr>\n";
 		$order = $nextorder[$order];
 	}
-	echo '</table></div>';
+	echo '</table>';
+	finishPortlet();
 }
 
 //
@@ -8508,14 +8508,14 @@ function renderVirtualResourcesSummary ()
 {
 	global $pageno, $nextorder;
 
-
+	echo '<div class="span6"><div class="row">';
 
 	$clusters = getVMClusterSummary ();
 	startPortlet ('Clusters (' . count ($clusters) . ')',6);
 	if (count($clusters) > 0)
 	{
-		echo "<table border=0 cellpadding=5 cellspacing=0 align=center class=cooltable>\n";
-		echo "<tr><th>Cluster</th><th>Hypervisors</th><th>VMs</th></tr>\n";
+		echo "<table border=0 cellpadding=5 cellspacing=0 align=center class='table table-striped'>\n";
+		echo "<thead><tr><th>Cluster</th><th>Hypervisors</th><th>VMs</th></tr></thead>";
 		$order = 'odd';
 		foreach ($clusters as $cluster)
 		{
@@ -8528,8 +8528,7 @@ function renderVirtualResourcesSummary ()
 		echo "</table>\n";
 	}
 	else
-		echo 'No clusters exist';
-		echo '<hr/>';
+		echo '<div class="padded">No clusters exist</div>';
 	finishPortlet();
 
 
@@ -8538,8 +8537,8 @@ function renderVirtualResourcesSummary ()
 	startPortlet ('Resource Pools (' . count ($pools) . ')',6);
 	if (count($pools) > 0)
 	{
-		echo "<table border=0 cellpadding=5 cellspacing=0 align=center class=cooltable>\n";
-		echo "<tr><th>Pool</th><th>Cluster</th><th>VMs</th></tr>\n";
+		echo "<table border=0 cellpadding=5 cellspacing=0 align=center class='table table-striped'>\n";
+		echo "<thead><tr><th>Pool</th><th>Cluster</th><th>VMs</th></tr></thead>";
 		$order = 'odd';
 		foreach ($pools as $pool)
 		{
@@ -8552,18 +8551,17 @@ function renderVirtualResourcesSummary ()
 		echo "</table>\n";
 	}
 	else
-		echo 'No pools exist';
-		echo '<hr/>';
+		echo '<div class="padded">No pools exist</div>';
 	finishPortlet();
 
-
+	echo '</div></div><div class="span6"><div class="row">';
 
 	$hypervisors = getVMHypervisorSummary ();
 	startPortlet ('Hypervisors (' . count ($hypervisors) . ')',6);
 	if (count($hypervisors) > 0)
 	{
-		echo "<table border=0 cellpadding=5 cellspacing=0 align=center class=cooltable>\n";
-		echo "<tr><th>Hypervisor</th><th>Cluster</th><th>VMs</th></tr>\n";
+		echo "<table border=0 cellpadding=5 cellspacing=0 align=center class='table table-striped'>\n";
+		echo "<thead><tr><th>Hypervisor</th><th>Cluster</th><th>VMs</th></tr></thead>";
 		$order = 'odd';
 		foreach ($hypervisors as $hypervisor)
 		{
@@ -8576,8 +8574,7 @@ function renderVirtualResourcesSummary ()
 		echo "</table>\n";
 	}
 	else
-		echo 'No hypervisors exist';
-		echo '<hr/>';
+		echo '<div class="padded">No hypervisors exist</div>';
 	finishPortlet();
 
 
@@ -8586,8 +8583,8 @@ function renderVirtualResourcesSummary ()
 	startPortlet ('Virtual Switches (' . count ($switches) . ')',6);
 	if (count($switches) > 0)
 	{
-		echo "<table border=0 cellpadding=5 cellspacing=0 align=center class=cooltable>\n";
-		echo "<tr><th>Name</th></tr>\n";
+		echo "<table border=0 cellpadding=5 cellspacing=0 align=center class='table table-striped'>\n";
+		echo "<thead><tr><th>Name</th></tr></thead>";
 		$order = 'odd';
 		foreach ($switches as $switch)
 		{
@@ -8598,10 +8595,10 @@ function renderVirtualResourcesSummary ()
 		echo "</table>\n";
 	}
 	else
-		echo 'No virtual switches exist';
-		echo '<hr/>';
+		echo '<div class="padded">No virtual switches exist</div>';
 	finishPortlet();
 
+	echo '</div></div>';
 
 }
 
@@ -8847,7 +8844,7 @@ function renderExpirations ()
 	$attrmap = getAttrMap();
 	foreach ($breakdown as $attr_id => $sections)
 	{
-		startPortlet ($attrmap[$attr_id]['name']);
+		startPortlet ($attrmap[$attr_id]['name'],12);
 		foreach ($sections as $section)
 		{
 			$count = 1;

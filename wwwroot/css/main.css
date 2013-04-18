@@ -1,18 +1,18 @@
 html, body { padding: 0; margin: 0;}
 
 body { padding: 60px; }
-  
+
 textarea {
 box-sizing: border-box;
 ms-box-sizing: border-box;
 webkit-box-sizing: border-box;
 moz-box-sizing: border-box
-}  
-  
+}
+
 .navbar-search {
     position: relative;
 }
-  
+
 .navbar-search .search-query {
     padding-left: 29px;
 }
@@ -65,25 +65,24 @@ td.pcright {
 
 .rack {
 	font: bold 12px Verdana, sans-serif;
-	border: 1px solid black;
-	border-top: 0px solid black;
-	border-right: 0px solid black;
+	border: 1px solid #DDD;
+	border-top: 0px solid #DDD;
+	border-right: 0px solid #DDD;
 	text-align: center;
 }
 
 .rack th {
-	border-top: 1px solid black;
-	border-right: 1px solid black;
+	border-top: 1px solid #DDD;
+	border-right: 1px solid #DDD;
 }
 
 .rack td {
-	border-top: 1px solid black;
-	border-right: 1px solid black;
+	border-top: 1px solid #DDD;
+	border-right: 1px solid #DDD;
 }
 
 .rack a {
-	font: bold 10px Verdana, sans-serif;
-	color: #000;
+
 	text-decoration: none;
 }
 
@@ -125,13 +124,13 @@ td.pcright {
     vertical-align: middle !important;
 }
 
-.state_F   { background-color: #8fbfbf; }
-.state_A   { background-color: #bfbfbf; }
-.state_U   { background-color: #bf8f8f; }
-.state_T   { background-color: #408080; }
-.state_Th  { background-color: #80ffff; }
-.state_Tw  { background-color: #804040; }
-.state_Thw { background-color: #ff8080; }
+.state_F   { background-color: #D9EDF7; } /*#8fbfbf; } */
+.state_A   { background-color: #F9F9F9; } /*#bfbfbf; } */
+.state_U   { background-color: #F2DEDE; } /*#bf8f8f; } */
+.state_T   { background-color: #FFFFFF; } /*#408080; } */
+.state_Th  { background-color: #DFF0D8; } /*#80ffff; } */
+.state_Tw  { background-color: #F9F9F9; } /*#804040; } */
+.state_Thw { background-color: #F9F9F9; } /*#ff8080; } */
 
 
 td form {
