@@ -5335,14 +5335,16 @@ function renderTagRollerForRow ($row_id)
 function renderRackCodeViewer ()
 {
 	$text = loadScript ('RackCode');
-	echo '<table width="100%" border=0>';
+	startPortlet('RackCode Viewer',12,'padded');
+	echo '<pre>';
 	$lineno = 1;
 	foreach (explode ("\n", $text) as $line)
 	{
-		echo "<tr><td class=tdright><a name=line${lineno}>${lineno}</a></td>";
-		echo "<td class=tdleft>${line}</td></tr>";
+		echo "${lineno}. " . $line .'<br/>';
 		$lineno++;
 	}
+	echo '</pre>';
+	finishPortlet();
 }
 
 function renderRackCodeEditor ()
@@ -5383,18 +5385,22 @@ ENDJAVASCRIPT
 	, TRUE);
 
 	$text = loadScript ('RackCode');
-	printOpFormIntro ('saveRackCode');
+	startPortlet('Permissions RackCode',12,'tpadded');
+	printOpFormIntro ('saveRackCode',array(),false,'form-flush');
 	echo '<table border=0 align=center>';
-	echo "<tr><td><textarea rows=40 cols=100 name=rackcode id=RCTA class='codepress rackcode'>";
+	echo "<tr><td><textarea rows=20 name=rackcode id=RCTA class='span11 codepress rackcode'>";
 	echo $text . "</textarea></td></tr>\n";
 	echo "<tr><td align=center>";
-	echo '<div id="ShowMessage"></div>';
-	echo "<input type='button' value='Verify' onclick='verify();'>";
-	echo "<input type='submit' value='Save' disabled='disabled' id='SaveChanges' onclick='$(RCTA).toggleEditor();'>";
-//	printImageHREF ('SAVE', 'Save changes', TRUE);
-	echo "</td></tr>";
+	echo '<div id="ShowMessage"></div></td></tr>';
 	echo '</table>';
+	echo '<div class="form-actions form-flush">';
+	echo "<input class='btn' type='button' value='Verify' onclick='verify();'>";
+	echo "<input class='btn' type='submit' value='Save' disabled='disabled' id='SaveChanges' onclick='$(RCTA).toggleEditor();'>";
+//	printImageHREF ('SAVE', 'Save changes', TRUE);
+	echo "</div>";
+	
 	echo "</form>";
+	finishPortlet();
 }
 
 function renderUser ($user_id)
