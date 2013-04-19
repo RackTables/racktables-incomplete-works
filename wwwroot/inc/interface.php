@@ -541,7 +541,7 @@ END
 			echo "<option value=${location['id']}>${location['name']}</option>";
 		echo "</select></td>";
 		echo "<td><input class='input-flush' type=text size=48 name=name tabindex=101></td><td>";
-		printImageHREF ('i:check', 't:Add', TRUE, 102);
+		printImageHREF ('i:ok', 't:Add', TRUE, 102);
 		echo "</td></tr></form>\n";
 	}
 
@@ -2132,7 +2132,7 @@ function renderDepot ()
 	{
 		if (count($objects) > 0)
 		{
-			startPortlet ('Objects (' . count ($objects) . ')');
+			startPortlet ('Objects',8,'',count ($objects) );
 			echo '<table border=0 cellpadding=5 cellspacing=0 align=center class="table table-striped">';
 			echo '<thead><tr><th>Common name</th><th>Visible label</th><th>Asset tag</th><th>Row/Rack or Container</th></tr></thead>';
 			$order = 'odd';
@@ -2362,7 +2362,7 @@ function renderIPSpace()
 	if (! renderEmptyResults($cellfilter, 'IP nets', count($tree)))
 	{
 		startPortlet ("Networks (${netcount})");
-		echo '<p>';
+		echo '<div class="padded">';
 		$all = "<a href='".makeHref(array('page'=>$pageno, 'tab'=>$tabno, 'eid'=>'ALL')) .
 				$cellfilter['urlextra'] . "'>expand&nbsp;all</a>";
 		$none = "<a href='".makeHref(array('page'=>$pageno, 'tab'=>$tabno, 'eid'=>'NONE')) .
@@ -2381,7 +2381,7 @@ function renderIPSpace()
 			$netinfo = spotEntity ($realm, $eid);
 			echo "expanding ${netinfo['ip']}/${netinfo['mask']} ($auto / $all / $none)";
 		}
-		echo "</p><table class='table table-striped' border=0 cellpadding=5 cellspacing=0 align='center'>\n";
+		echo "</div><table class='table table-striped' border=0 cellpadding=5 cellspacing=0 align='center'>\n";
 		echo "<thead><tr><th>Prefix</th><th>Name/Tags</th><th>Capacity</th>";
 		if (getConfigVar ('IPV4_TREE_RTR_AS_CELL') != 'none')
 			echo "<th>Routed by</th>";
@@ -2453,11 +2453,11 @@ $(document).ready(function () {
 END
 	, TRUE);
 
-	startPortlet ('Add new',12);
+	startPortlet ('Add new',12,'tpadded');
 	////echo '<table border=0 cellpadding=10 align=center>';
 	// This form requires a name, so JavaScript validator can find it.
 	// No printOpFormIntro() hence
-	echo "<form class='form-horizontal' method=post name='add_new_range' action='".makeHrefProcess(array ('op'=>'add'))."'>\n";
+	echo "<form class='form-horizontal form-flush' method=post name='add_new_range' action='".makeHrefProcess(array ('op'=>'add'))."'>\n";
 	// tags column
 	////echo '<tr><td rowspan=5>
 
@@ -3715,7 +3715,7 @@ function renderCellList ($realm = NULL, $title = 'items', $do_amplify = FALSE, $
 	{
 		if ($do_amplify)
 			array_walk ($celllist, 'amplifyCell');
-		startPortlet ($title . ' (' . count ($celllist) . ')');
+		startPortlet ($title,8,'',count ($celllist));
 		echo "<table class='table table-striped' border=0 cellpadding=5 cellspacing=0 align=center>\n";
 		foreach ($celllist as $cell)
 		{
@@ -5693,10 +5693,10 @@ function renderFileManager ()
 	// Used for uploading a parentless file
 	function printNewItemTR ()
 	{
-		startPortlet ('Upload new',12);
+		startPortlet ('Upload new',12,'tpadded');
 		echo '<div class="row">';
 		printOpFormIntro ('addFile', array (), TRUE);
-		echo '<div class="span8">';
+		echo '<div class="span7">';
 
 		echo '<div class="control-group"><label class="control-label" for="inputEmail">Comment:</label><div class="controls">';
 		echo '<textarea style="width:100%;" tabindex=101 name=comment rows=10 cols=80></textarea>';
@@ -5762,7 +5762,7 @@ function renderFilesPortlet ($entity_type = NULL, $entity_id = 0,$width=8)
 	$files = getFilesOfEntity ($entity_type, $entity_id);
 	if (count ($files))
 	{
-		startPortlet ('Files (' . count ($files) . ')',$width);
+		startPortlet ('Files',$width,'',count ($files));
 		echo "<table cellspacing=0 cellpadding='5' align='center' class='table table-striped'>\n";
 		echo "<thead><tr><th>File</th><th>Comment</th></tr></thead>";
 		foreach ($files as $file)
@@ -5947,19 +5947,18 @@ function renderCell ($cell)
 	switch ($cell['realm'])
 	{
 	case 'user':
-		echo "<table class='slbcell vscell'><tr><td rowspan=3 width='5%'>";
-		printImageHREF ('USER');
-		echo '</td>';
-		echo "<td><a href='index.php?page=user&user_id=${cell['user_id']}'>${cell['user_name']}</a></td></tr>";
-		if (strlen ($cell['user_realname']))
-			echo "<tr><td><strong>" . niftyString ($cell['user_realname']) . "</strong></td></tr>";
-		else
-			echo "<tr><td class=sparenetwork>no name</td></tr>";
-		echo '<td>';
+		printImage ('i:user');
+		echo "&nbsp;<a href='index.php?page=user&user_id=${cell['user_id']}'>${cell['user_name']}</a>";
+		if (strlen ($cell['user_realname'])) {
+			echo " - <strong>" . niftyString ($cell['user_realname']) . "</strong>";
+		}
+
 		if (!isset ($cell['etags']))
 			$cell['etags'] = getExplicitTagsOnly (loadEntityTags ('user', $cell['user_id']));
-		echo count ($cell['etags']) ? ("<small>" . serializeTags ($cell['etags']) . "</small>") : '&nbsp;';
-		echo "</td></tr></table>";
+
+			if (count ($cell['etags'])) 
+			echo "<span class='pull-right'><small>" . serializeTags ($cell['etags']) . "</small><span>";
+			
 		break;
 	case 'file':
 		$image = '';
@@ -5978,7 +5977,7 @@ function renderCell ($cell)
 				break;
 		}
 		echo '<i class="icon-file"></i>&nbsp;';
-		printf ("<a href='index.php?page=file&file_id=%s'><strong>%s</strong></a><span class='pull-right label label-info'>", $cell['id'], niftyString ($cell['name']));
+		printf ("<a href='index.php?page=file&file_id=%s'><strong>%s</strong></a><span class='pull-right'>", $cell['id'], niftyString ($cell['name']));
 		if (isset ($cell['links']) and count ($cell['links']))
 			printf ('%s', serializeFileLinks ($cell['links']));
 		echo count ($cell['etags']) ? ("" . serializeTags ($cell['etags']) . "") : '&nbsp;';
@@ -5986,10 +5985,10 @@ function renderCell ($cell)
 		if (isolatedPermission ('file', 'download', $cell))
 		{
 			// FIXME: reuse renderFileDownloader()
-			echo "<a href='?module=download&file_id=${cell['id']}'><i class='icon-download icon-white'></i>";
+			echo "<span class='label label-info'><a href='?module=download&file_id=${cell['id']}'><i class='icon-download icon-white'></i>";
 			echo '</a>&nbsp;';
 		}
-		echo formatFileSize ($cell['size']) . '</span>';
+		echo formatFileSize ($cell['size']) . '</span></span>';
 		break;
 	case 'ipv4vs':
 	case 'ipv4rspool':
@@ -8511,7 +8510,7 @@ function renderVirtualResourcesSummary ()
 	echo '<div class="span6"><div class="row">';
 
 	$clusters = getVMClusterSummary ();
-	startPortlet ('Clusters (' . count ($clusters) . ')',6);
+	startPortlet ('Clusters',6,'',count ($clusters));
 	if (count($clusters) > 0)
 	{
 		echo "<table border=0 cellpadding=5 cellspacing=0 align=center class='table table-striped'>\n";
@@ -8534,7 +8533,7 @@ function renderVirtualResourcesSummary ()
 
 
 	$pools = getVMResourcePoolSummary ();
-	startPortlet ('Resource Pools (' . count ($pools) . ')',6);
+	startPortlet ('Resource Pools',6,'',count ($pools));
 	if (count($pools) > 0)
 	{
 		echo "<table border=0 cellpadding=5 cellspacing=0 align=center class='table table-striped'>\n";
@@ -8557,7 +8556,7 @@ function renderVirtualResourcesSummary ()
 	echo '</div></div><div class="span6"><div class="row">';
 
 	$hypervisors = getVMHypervisorSummary ();
-	startPortlet ('Hypervisors (' . count ($hypervisors) . ')',6);
+	startPortlet ('Hypervisors',6,'', count ($hypervisors) );
 	if (count($hypervisors) > 0)
 	{
 		echo "<table border=0 cellpadding=5 cellspacing=0 align=center class='table table-striped'>\n";
@@ -8580,7 +8579,7 @@ function renderVirtualResourcesSummary ()
 
 
 	$switches = getVMSwitchSummary ();
-	startPortlet ('Virtual Switches (' . count ($switches) . ')',6);
+	startPortlet ('Virtual Switches',6,'',count ($switches));
 	if (count($switches) > 0)
 	{
 		echo "<table border=0 cellpadding=5 cellspacing=0 align=center class='table table-striped'>\n";

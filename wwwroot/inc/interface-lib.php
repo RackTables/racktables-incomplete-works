@@ -664,7 +664,7 @@ function getRenderedIPv4NetCapacity ($range)
 
 
 
-		$text = '<div class="progress pull-left" title="' . $title2 . '" style="width:100px;margin-top:6px;margin-bottom:6px;"><div class="bar" style="width: '.$done.'%;"></div></div><small style="padding-left:5px;" class="title">' . $title . '</small>';
+		$text = '<div class="progress pull-left" data-toggle="tooltip" title="' . $title2 . '" style="width:100px;margin-top:6px;margin-bottom:6px;"><div class="bar" style="width: '.$done.'%;"></div></div><small style="padding-left:5px;" class="title">' . $title . '</small>';
 
 		//$text = "<img width='$width' height=10 border=0 title='$title2' src='?module=progressbar4&px1=$px1&px2=$px2&px3=$px3'><small class='title'>$title</small>";
 	}
@@ -816,9 +816,15 @@ function serializeTags ($chain, $baseurl = '')
 	return implode ('', $tmp);
 }
 
-function startPortlet ($title = '',$width=8,$extraclass='')
+function startPortlet ($title = '',$width=8,$extraclass='',$recordCount=null)
 {
-	echo "<div class='span${width} portlet'><div class='box'><div class='box-header'><span class='title'>${title}</span></div><div class='box-content {$extraclass}'>";
+
+$extraHead = '';
+if ($recordCount !== null) {
+	$extraHead = '<ul class="box-toolbar"><li><span class="badge badge-success">' . $recordCount . '</span></li></ul>';
+}
+
+	echo "<div class='span${width} portlet'><div class='box'><div class='box-header'><span class='title'>${title}</span>{$extraHead}</div><div class='box-content {$extraclass}'>";
 }
 
 function finishPortlet ($withdivide=false)
