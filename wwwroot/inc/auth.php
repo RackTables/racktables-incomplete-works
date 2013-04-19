@@ -26,69 +26,83 @@ function authenticate ()
 		$user_auth_src,
 		$script_mode,
 		$require_local_account;
+	// Phase 1. Assert basic pre-requisites, short-circuit the logout request.
 	if (!isset ($user_auth_src) or !isset ($require_local_account))
 		throw new RackTablesError ('secret.php: either user_auth_src or require_local_account are missing', RackTablesError::MISCONFIGURED);
 	if (isset ($_REQUEST['logout']))
 		throw new RackTablesError ('', RackTablesError::NOT_AUTHENTICATED); // Reset browser credentials cache.
-	if ( !isset ($script_mode) || !$script_mode || !( isset ($remote_username) && strlen ($remote_username) ) )
-		switch ($user_auth_src)
-		{
-			case 'database':
-			case 'ldap':
-				if
-				(
-					!isset ($_SERVER['PHP_AUTH_USER']) or
-					!strlen ($_SERVER['PHP_AUTH_USER']) or
-					!isset ($_SERVER['PHP_AUTH_PW']) or
-					!strlen ($_SERVER['PHP_AUTH_PW'])
-				)
-					throw new RackTablesError ('', RackTablesError::NOT_AUTHENTICATED);
-				$remote_username = $_SERVER['PHP_AUTH_USER'];
-				break;
-			case 'httpd':
-				if
-				(
-					!isset ($_SERVER['REMOTE_USER']) or
-					!strlen ($_SERVER['REMOTE_USER'])
-				)
-					throw new RackTablesError ('The web-server didn\'t authenticate the user, although ought to do.', RackTablesError::MISCONFIGURED);
-				$remote_username = $_SERVER['REMOTE_USER'];
-				break;
-			default:
-				throw new RackTablesError ('Invalid authentication source!', RackTablesError::MISCONFIGURED);
-				die;
-		}
+	// Phase 2. Do some method-specific processing, initialize $remote_username on success.
+	switch (TRUE)
+	{
+		case isset ($script_mode) && $script_mode && isset ($remote_username) && strlen ($remote_username):
+			break; // skip this phase
+		case 'database' == $user_auth_src:
+		case 'ldap' == $user_auth_src:
+			if
+			(
+				! isset ($_SERVER['PHP_AUTH_USER']) or
+				! strlen ($_SERVER['PHP_AUTH_USER']) or
+				! isset ($_SERVER['PHP_AUTH_PW']) or
+				! strlen ($_SERVER['PHP_AUTH_PW'])
+			)
+				throw new RackTablesError ('', RackTablesError::NOT_AUTHENTICATED);
+			$remote_username = $_SERVER['PHP_AUTH_USER'];
+			break;
+		case 'httpd' == $user_auth_src:
+			if
+			(
+				! isset ($_SERVER['REMOTE_USER']) or
+				! strlen ($_SERVER['REMOTE_USER'])
+			)
+				throw new RackTablesError ('The web-server didn\'t authenticate the user, although ought to do.', RackTablesError::MISCONFIGURED);
+			$remote_username = $_SERVER['REMOTE_USER'];
+			break;
+		case 'saml' == $user_auth_src:
+			$saml_username = '';
+			$saml_dispname = '';
+			if (! authenticated_via_saml ($saml_username, $saml_dispname))
+				throw new RackTablesError ('', RackTablesError::NOT_AUTHENTICATED);
+			$remote_username = $saml_username;
+			break;
+		default:
+			throw new RackTablesError ('Invalid authentication source!', RackTablesError::MISCONFIGURED);
+	}
+	// Phase 3. Handle local account requirement, pull user tags into security context.
 	$userinfo = constructUserCell ($remote_username);
 	if ($require_local_account and !isset ($userinfo['user_id']))
 		throw new RackTablesError ('', RackTablesError::NOT_AUTHENTICATED);
 	$user_given_tags = $userinfo['etags'];
 	$auto_tags = array_merge ($auto_tags, $userinfo['atags']);
+	// Phase 4. Do more method-specific processing, initialize $remote_displayname on success.
 	switch (TRUE)
 	{
 		case isset ($script_mode) && $script_mode:
 			return; // success
 		// Just trust the server, because the password isn't known.
-		case ('httpd' == $user_auth_src):
+		case 'httpd' == $user_auth_src:
 			$remote_displayname = strlen ($userinfo['user_realname']) ?
 				$userinfo['user_realname'] :
 				$remote_username;
 			return; // success
 		// When using LDAP, leave a mean to fix things. Admin user is always authenticated locally.
-		case ('database' == $user_auth_src or (array_key_exists ('user_id', $userinfo) and $userinfo['user_id'] == 1)):
+		case array_key_exists ('user_id', $userinfo) and $userinfo['user_id'] == 1:
+		case 'database' == $user_auth_src:
 			$remote_displayname = strlen ($userinfo['user_realname']) ?
 				$userinfo['user_realname'] :
 				$remote_username;
 			if (authenticated_via_database ($userinfo, $_SERVER['PHP_AUTH_PW']))
 				return; // success
 			break; // failure
-		case ('ldap' == $user_auth_src):
+		case 'ldap' == $user_auth_src:
 			$ldap_dispname = '';
-			$ldap_success = authenticated_via_ldap ($remote_username, $_SERVER['PHP_AUTH_PW'], $ldap_dispname);
-			if (!$ldap_success)
+			if (! authenticated_via_ldap ($remote_username, $_SERVER['PHP_AUTH_PW'], $ldap_dispname))
 				break; // failure
 			$remote_displayname = strlen ($userinfo['user_realname']) ? // local value is most preferred
 				$userinfo['user_realname'] :
 				(strlen ($ldap_dispname) ? $ldap_dispname : $remote_username); // then one from LDAP
+			return; // success
+		case 'saml' == $user_auth_src:
+			$remote_displayname = strlen ($saml_dispname) ? $saml_dispname : $saml_username;
 			return; // success
 		default:
 			throw new RackTablesError ('Invalid authentication source!', RackTablesError::MISCONFIGURED);
@@ -242,6 +256,29 @@ function processAdjustmentSentence ($modlist, &$chain)
 				throw new RackTablesError ('invalid structure', RackTablesError::INTERNAL);
 		}
 	return $didChanges;
+}
+
+// a wrapper for SAML auth method
+function authenticated_via_saml (&$saml_username = NULL, &$saml_displayname = NULL)
+{
+	global $SAML_options, $debug_mode;
+	if (! file_exists ($SAML_options['simplesamlphp_basedir'] . '/lib/_autoload.php'))
+		throw new RackTablesError ('Configured for SAML authentication, but simplesaml is not found.', RackTablesError::MISCONFIGURED);
+	require_once ($SAML_options['simplesamlphp_basedir'] . '/lib/_autoload.php');
+	$as = new SimpleSAML_Auth_Simple ($SAML_options['sp_profile']);
+	if (! $as->isAuthenticated())
+		$as->requireAuth();
+	$attributes = $as->getAttributes();
+	$saml_username = saml_getAttributeValue ($attributes, $SAML_options['usernameAttribute']);
+	$saml_displayname = saml_getAttributeValue ($attributes, $SAML_options['fullnameAttribute']);
+	return $as->isAuthenticated();
+}
+
+function saml_getAttributeValue ($attributes, $name)
+{
+	if (! isset ($attributes[$name]))
+		return '';
+	return is_array ($attributes[$name]) ? $attributes[$name][0] : $attributes[$name];
 }
 
 // a wrapper for two LDAP auth methods below

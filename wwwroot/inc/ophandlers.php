@@ -854,7 +854,7 @@ $msgcode['addBulkPorts']['OK'] = 82;
 function addBulkPorts ()
 {
 	assertStringArg ('port_type_id');
-	assertStringArg ('port_name');
+	assertStringArg ('port_name', TRUE);
 	assertStringArg ('port_label', TRUE);
 	assertUIntArg ('port_numbering_start', TRUE);
 	assertUIntArg ('port_numbering_count');
@@ -926,12 +926,7 @@ function addIPv4Prefix ()
 	global $sic;
 	$vlan_ck = empty ($sic['vlan_ck']) ? NULL : $sic['vlan_ck'];
 	$net_id = createIPv4Prefix ($_REQUEST['range'], $sic['name'], isCheckSet ('is_connected'), $taglist, $vlan_ck);
-	showSuccess
-	(
-		'IP network <a href="' .
-		makeHref (array ('page' => 'ipv4net', 'tab' => 'default', 'id' => $net_id)) .
-		'">' . $_REQUEST['range'] . '</a> has been created'
-	);
+	showSuccess ('IP network ' . mkA ($_REQUEST['range'], 'ipv4net', $net_id) . ' has been created');
 }
 
 function addIPv6Prefix ()
@@ -943,12 +938,7 @@ function addIPv6Prefix ()
 	global $sic;
 	$vlan_ck = empty ($sic['vlan_ck']) ? NULL : $sic['vlan_ck'];
 	$net_id = createIPv6Prefix ($_REQUEST['range'], $sic['name'], isCheckSet ('is_connected'), $taglist, $vlan_ck);
-	showSuccess
-	(
-		'IP network <a href="' .
-		makeHref (array ('page' => 'ipv6net', 'tab' => 'default', 'id' => $net_id)) .
-		'">' . $_REQUEST['range'] . '</a> has been created'
-	);
+	showSuccess ('IP network ' . mkA ($_REQUEST['range'], 'ipv6net', $net_id) . ' has been created');
 }
 
 $msgcode['delIPv4Prefix']['OK'] = 49;
@@ -1206,12 +1196,6 @@ function updateObjectAttributes ($object_id)
 		if ($type_id == 1560 and ($attr_id == 27 or $attr_id == 29))
 			continue;
 
-		if ('date' == $oldvalues[$attr_id]['type']) {
-			assertDateArg ("${i}_value", TRUE);
-			if ($value != '')
-				$value = strtotime ($value);
-		}
-
 		// Delete attribute and move on, when the field is empty or if the field
 		// type is a dictionary and it is the "--NOT SET--" value of 0.
 		if ($value == '' || ($oldvalues[$attr_id]['type'] == 'dict' && $value == 0))
@@ -1225,7 +1209,11 @@ function updateObjectAttributes ($object_id)
 
 		// The value could be uint/float, but we don't know ATM. Let SQL
 		// server check this and complain.
-		assertStringArg ("${i}_value");
+		if ('date' == $oldvalues[$attr_id]['type'])
+			$value = assertDateArg ("${i}_value");
+		else
+			assertStringArg ("${i}_value");
+
 		switch ($oldvalues[$attr_id]['type'])
 		{
 			case 'uint':
@@ -1484,10 +1472,12 @@ function resetUIConfig()
 	setConfigVar ('MUNIN_LISTSRC', 'false');
 	setConfigVar ('VIRTUAL_OBJ_LISTSRC', '1504,1505,1506,1507');
 	setConfigVar ('DATETIME_ZONE', 'UTC');
-	setConfigVar ('DATETIME_FORMAT', 'm/d/Y');
+	setConfigVar ('DATETIME_FORMAT', '%Y-%m-%d');
 	setConfigVar ('SEARCH_DOMAINS', '');
 	setConfigVar ('8021Q_EXTSYNC_LISTSRC', 'false');
 	setConfigVar ('8021Q_MULTILINK_LISTSRC', 'false');
+	setConfigVar ('REVERSED_RACKS_LISTSRC', 'false');
+	setConfigVar ('NEAREST_RACKS_CHECKBOX', 'yes');
 	return showFuncMessage (__FUNCTION__, 'OK');
 }
 
@@ -1591,7 +1581,7 @@ function addVService ()
 	if (isset ($_REQUEST['taglist']))
 		produceTagsForNewRecord ('ipv4vs', $_REQUEST['taglist'], $vs_id);
 	$vsinfo = spotEntity ('ipv4vs', $vs_id);
-	return showSuccess ('Virtual service <a href="' . makeHref (array ('page' => 'ipv4vs', 'tab' => 'default', 'vs_id' => $vs_id)) . '">' . $vsinfo['dname'] . '</a> created successfully');
+	return showSuccess ('Virtual service ' . mkA ($vsinfo['dname'], 'ipv4vs', $vs_id) . ' created successfully');
 }
 
 $msgcode['deleteVService']['OK'] = 49;
@@ -1702,7 +1692,7 @@ function addRSPool ()
 		$sic['rsconfig'],
 		isset ($_REQUEST['taglist']) ? $_REQUEST['taglist'] : array()
 	);
-	return showSuccess ('RS pool <a href="' . makeHref (array ('page' => 'ipv4rspool', 'tab' => 'default', 'pool_id' => $pool_id)) . '">' . $_REQUEST['name'] . '</a> created successfully');
+	return showSuccess ('RS pool ' . mkA ($_REQUEST['name'], 'ipv4rspool', $pool_id) . ' created successfully');
 }
 
 $msgcode['deleteRSPool']['OK'] = 49;
@@ -1909,6 +1899,8 @@ function deleteLocation ()
 	amplifyCell ($locationData);
 	if (count ($locationData['locations']) || count ($locationData['rows']))
 		return showFuncMessage (__FUNCTION__, 'ERR1', array ($locationData['name']));
+	releaseFiles ('location', $_REQUEST['location_id']);
+	destroyTagsForEntity ('location', $_REQUEST['location_id']);
 	commitDeleteObject ($_REQUEST['location_id']);
 	showFuncMessage (__FUNCTION__, 'OK', array ($locationData['name']));
 	return buildRedirectURL ('rackspace', 'editlocations');
@@ -2063,6 +2055,9 @@ function deleteRack ()
 	amplifyCell ($rackData);
 	if (count ($rackData['mountedObjects']))
 		return showFuncMessage (__FUNCTION__, 'ERR1');
+	releaseFiles ('rack', $_REQUEST['rack_id']);
+	destroyTagsForEntity ('rack', $_REQUEST['rack_id']);
+	usePreparedDeleteBlade ('RackSpace', array ('rack_id' => $_REQUEST['rack_id']));
 	commitDeleteObject ($_REQUEST['rack_id']);
 	resetRackSortOrder ($rackData['row_id']);
 	showFuncMessage (__FUNCTION__, 'OK', array ($rackData['name']));
@@ -2673,8 +2668,7 @@ function updVSTRule()
 
 	global $port_role_options, $sic;
 	assertUIntArg ('mutex_rev', TRUE);
-	genericAssertion ('template_json', 'json');
-	$data = json_decode ($sic['template_json'], TRUE);
+	$data = genericAssertion ('template_json', 'json');
 	$rule_no = 0;
 	try
 	{
@@ -2997,7 +2991,7 @@ function cloneRSPool()
 	$new_id = commitCreateRSPool ($pool['name'] . ' (copy)', $pool['vsconfig'], $pool['rsconfig'], $tagidlist);
 	foreach ($rs_list as $rs)
 		addRStoRSPool ($new_id, $rs['rsip_bin'], $rs['rsport'], $rs['inservice'], $rs['rsconfig'], $rs['comment']);
-	showSuccess ("Created a copy of pool <a href='" . makeHref (array ('page' => 'ipv4rspool', 'tab' => 'default', 'pool_id' => $pool['id'])) . "'>${pool['name']}</a>");
+	showSuccess ('Created a copy of pool  ' . mkA ($pool['name'], 'ipv4rspool', $pool['id']));
 	return buildRedirectURL ('ipv4rspool', 'default', array ('pool_id' => $new_id));
 }
 

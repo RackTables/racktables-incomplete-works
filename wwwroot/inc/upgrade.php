@@ -164,6 +164,30 @@ This rule now not only allows any operation on NY client networks, but also any 
 
 ENDOFTEXT
 ,
+
+	'0.20.4' => <<<ENDOFTEXT
+Please note that some dictionary items of Cisco Catalyst 2960 series switches
+were renamed to meet official Cisco classification:
+	2960-48TT   => 2960-48TT-L
+	2960-24TC   => 2960-24TC-L
+	2960-24TT   => 2960-24TT-L
+	2960-8TC    => 2960-8TC-L
+	2960G-48TC  => 2960G-48TC-L
+	2960G-24TC  => 2960G-24TC-L
+	2960G-8TC   => 2960G-8TC-L
+	C2960-24    => C2960-24-S
+	C2960G-24PC => C2960-24PC-L
+
+The DATETIME_FORMAT configuration option used in setting date and time output
+format now uses a different [1] syntax. During upgrade the option is reset to
+the default value, which is now %Y-%m-%d (YYYY-MM-DD) per ISO 8601.
+
+This release intoduces two new configuration options:
+REVERSED_RACKS_LISTSRC and NEAREST_RACKS_CHECKBOX.
+
+[1] http://php.net/manual/en/function.strftime.php
+ENDOFTEXT
+,
 );
 
 // At the moment we assume, that for any two releases we can
@@ -219,6 +243,7 @@ function getDBUpgradePath ($v1, $v2)
 		'0.20.1',
 		'0.20.2',
 		'0.20.3',
+		'0.20.4',
 	);
 	if (!in_array ($v1, $versionhistory) or !in_array ($v2, $versionhistory))
 		return NULL;
@@ -1614,6 +1639,17 @@ CREATE TABLE `MuninGraph` (
 		case '0.20.3':
 			$query[] = "UPDATE Config SET varvalue = '0.20.3' WHERE varname = 'DB_VERSION'";
 			break;
+		case '0.20.4':
+			$query[] = "ALTER TABLE `FileLink` MODIFY COLUMN `entity_type` ENUM('ipv4net','ipv4rspool','ipv4vs','ipv6net','location','object','rack','row','user') NOT NULL DEFAULT 'object'";
+			$query[] = "ALTER TABLE `RackSpace` MODIFY COLUMN `state` ENUM('A','U','T') NOT NULL default 'A'";
+			$query[] = "INSERT INTO `Config` (varname, varvalue, vartype, emptyok, is_hidden, is_userdefined, description) VALUES ('REVERSED_RACKS_LISTSRC', 'false', 'string', 'yes', 'no', 'no', 'List of racks with reversed (top to bottom) units order')";
+			$query[] = "UPDATE `Config` SET varvalue = CONCAT(varvalue, ' or {\$typeid_965}') WHERE varname = 'IPV4OBJ_LISTSRC'";
+			$query[] = "UPDATE AttributeValue INNER JOIN AttributeMap USING (attr_id) SET AttributeValue.uint_value = 1572 WHERE chapter_id = 12 AND uint_value = 162";
+			$query[] = "UPDATE AttributeValue INNER JOIN AttributeMap USING (attr_id) SET AttributeValue.uint_value = 1710 WHERE chapter_id = 12 AND uint_value = 163";
+			$query[] = "UPDATE Config SET varvalue = '%Y-%m-%d', description='PHP strftime() format to use for date output' WHERE varname = 'DATETIME_FORMAT'";
+			$query[] = "INSERT INTO `Config` (varname, varvalue, vartype, emptyok, is_hidden, is_userdefined, description) VALUES ('NEAREST_RACKS_CHECKBOX', 'yes', 'string', 'yes', 'no', 'yes', 'Enable nearest racks in port list filter by default')";
+			$query[] = "UPDATE Config SET varvalue = '0.20.4' WHERE varname = 'DB_VERSION'";
+			break;
 		case 'dictionary':
 			$query = reloadDictionary();
 			break;
@@ -1627,7 +1663,8 @@ function executeUpgradeBatch ($batchid)
 {
 	global $dbxlink;
 	$query = getUpgradeBatch($batchid);
-	if ($query === NULL) {
+	if ($query === NULL)
+	{
 		showError ("unknown batch '${batchid}'", __FUNCTION__);
 		die;
 	}
@@ -1803,6 +1840,7 @@ else
 	else
 	{
 		echo "<tr><th>Upgrade path</th><td>${dbver} &rarr; " . implode (' &rarr; ', $path) . "</td></tr>\n";
+		global $relnotes;
 		foreach ($path as $batchid)
 			if (isset ($relnotes[$batchid]))
 				echo "<tr><th>Release notes for ${batchid}</th><td><pre>" . $relnotes[$batchid] . "</pre></td></tr>\n";

@@ -12,6 +12,7 @@ $breedfunc = array
 	'ios12-getcdpstatus-main'  => 'ios12ReadCDPStatus',
 	'ios12-getlldpstatus-main' => 'ios12ReadLLDPStatus',
 	'ios12-get8021q-main'      => 'ios12ReadVLANConfig',
+	'ios12-get8021q-swports'   => 'ios12ReadSwitchPortList',
 	'ios12-get8021q-top'       => 'ios12ScanTopLevel',
 	'ios12-get8021q-readport'  => 'ios12PickSwitchportCommand',
 	'ios12-get8021q-readvlan'  => 'ios12PickVLANCommand',
@@ -41,10 +42,7 @@ $breedfunc = array
 	'vrp55-getallconf-main'    => 'vrp5xSpotConfigText',
 	'nxos4-getcdpstatus-main'  => 'ios12ReadCDPStatus',
 	'nxos4-getlldpstatus-main' => 'nxos4ReadLLDPStatus',
-	'nxos4-get8021q-main'      => 'nxos4Read8021QConfig',
-	'nxos4-get8021q-top'       => 'nxos4ScanTopLevel',
-	'nxos4-get8021q-readport'  => 'nxos4PickSwitchportCommand',
-	'nxos4-get8021q-readvlan'  => 'nxos4PickVLANCommand',
+	'nxos4-get8021q-main'      => 'ios12ReadVLANConfig',
 	'nxos4-getportstatus-main' => 'ciscoReadInterfaceStatus',
 	'nxos4-getmaclist-main'    => 'nxos4ReadMacList',
 	'nxos4-xlatepushq-main'    => 'nxos4TranslatePushQueue',
@@ -66,6 +64,7 @@ $breedfunc = array
 	'jun10-get8021q-main'      => 'jun10Read8021QConfig',
 	'jun10-xlatepushq-main'    => 'jun10TranslatePushQueue',
 	'jun10-getallconf-main'    => 'jun10SpotConfigText',
+	'jun10-getlldpstatus-main' => 'jun10ReadLLDPStatus',
 	'ftos8-xlatepushq-main'    => 'ftos8TranslatePushQueue',
 	'ftos8-getlldpstatus-main' => 'ftos8ReadLLDPStatus',
 	'ftos8-getmaclist-main'    => 'ftos8ReadMacList',
@@ -91,60 +90,78 @@ $breedfunc = array
 	'ros11-get8021q-readports' => 'ros11Read8021QPorts',
 	'iosxr4-xlatepushq-main'   => 'iosxr4TranslatePushQueue',
 	'iosxr4-getallconf-main'   => 'iosxr4SpotConfigText',
+	'iosxr4-getlldpstatus-main'=> 'iosxr4ReadLLDPStatus',
 	'ucs-xlatepushq-main'      => 'ucsTranslatePushQueue',
 	'ucs-getinventory-main'    => 'ucsReadInventory',
 );
 
 define ('MAX_GW_LOGSIZE', 1024*1024); // do not store more than 1 MB of log data
 
+$breed_by_swcode = array
+(
+	244  => 'ios12', // IOS 12.0
+	251  => 'ios12', // IOS 12.1
+	252  => 'ios12', // IOS 12.2
+	254  => 'ios12', // IOS 12.0 (router OS)
+	255  => 'ios12', // IOS 12.1 (router OS)
+	256  => 'ios12', // IOS 12.2 (router OS)
+	257  => 'ios12', // IOS 12.3 (router OS)
+	258  => 'ios12', // IOS 12.4 (router OS)
+	1901 => 'ios12', // IOS 15.0
+	1963 => 'ios12', // IOS 15.1 (router OS)
+	963  => 'nxos4', // NX-OS 4.0
+	964  => 'nxos4', // NX-OS 4.1
+	1365 => 'nxos4', // NX-OS 4.2
+	1410 => 'nxos4', // NX-OS 5.0
+	1411 => 'nxos4', // NX-OS 5.1
+	1809 => 'nxos4', // NX-OS 5.2
+	1643 => 'nxos4', // NX-OS 6.0
+	1352 => 'xos12', // Extreme XOS 12
+	1360 => 'vrp53', // Huawei VRP 5.3
+	1361 => 'vrp55', // Huawei VRP 5.5
+	1369 => 'vrp55', // Huawei VRP 5.7
+	1363 => 'fdry5', // IronWare 5
+	1367 => 'jun10', // 10S
+	1597 => 'jun10', // 10R
+	1598 => 'jun10', // 11R
+	1599 => 'jun10', // 12R
+	1594 => 'ftos8', // Force10 FTOS 8
+	1673 => 'air12', // AIR IOS 12.3
+	1674 => 'air12', // AIR IOS 12.4
+	1675 => 'eos4',  // Arista EOS 4
+	1759 => 'iosxr4', // Cisco IOS XR 4.2
+	1786 => 'ros11', // Marvell ROS 1.1
+
+	//... linux items added by the loop below
+);
+
+$breed_by_hwcode = array (
+	//... dlink items added by the loop below
+);
+
+$breed_by_mgmtcode = array (
+	1788 => 'ucs',
+);
+
+// add 'linux' items into $breed_by_swcode
+$linux_sw_ranges = array (
+	225,235,
+	418,436,
+	1331,1334,
+	1395,1396,
+	1417,1422,
+);
+for ($i = 0; $i + 1 < count ($linux_sw_ranges); $i += 2)
+	for ($j = $linux_sw_ranges[$i]; $j <= $linux_sw_ranges[$i + 1]; $j++)
+		$breed_by_swcode[$j] = 'linux';
+
+// add 'dlink' items into $breed_by_hwcode
+for ($i = 589; $i <= 637; $i++)
+	$breed_by_hwcode[$i] = 'dlink';
+
 function detectDeviceBreed ($object_id)
 {
-	$breed_by_swcode = array
-	(
-		251 => 'ios12',
-		252 => 'ios12',
-		254 => 'ios12',
-		963 => 'nxos4', // NX-OS 4.0
-		964 => 'nxos4', // NX-OS 4.1
-		1365 => 'nxos4', // NX-OS 4.2
-		1410 => 'nxos4', // NX-OS 5.0, seems compatible
-		1411 => 'nxos4', // NX-OS 5.1
-		1809 => 'nxos4', // NX-OS 5.2
-		1643 => 'nxos4', // NX-OS 6.0
-		1352 => 'xos12',
-		1360 => 'vrp53',
-		1361 => 'vrp55',
-		1369 => 'vrp55', // VRP versions 5.5 and 5.7 seem to be compatible
-		1363 => 'fdry5',
-		1367 => 'jun10', # 10S
-		1597 => 'jun10', # 10R
-		1598 => 'jun10', # 11R
-		1599 => 'jun10', # 12R
-		1594 => 'ftos8',
-		1673 => 'air12', # AIR IOS 12.3
-		1674 => 'air12', # AIR IOS 12.4
-		1675 => 'eos4',
-		1759 => 'iosxr4', # Cisco IOS XR 4.2
-		1786 => 'ros11', # Marvell ROS 1.1
-		242 => 'linux',
-		243 => 'linux',
-		1331 => 'linux',
-		1332 => 'linux',
-		1333 => 'linux',
-		1334 => 'linux',
-		1395 => 'linux',
-		1396 => 'linux',
-	);
-	for ($i = 225; $i <= 235; $i++)
-		$breed_by_swcode[$i] = 'linux';
-	for ($i = 418; $i <= 436; $i++)
-		$breed_by_swcode[$i] = 'linux';
-	for ($i = 1417; $i <= 1422; $i++)
-		$breed_by_swcode[$i] = 'linux';
-	$breed_by_hwcode = array();
-	for ($i = 589; $i <= 637; $i++)
-		$breed_by_hwcode[$i] = 'dlink';
-	$breed_by_mgmtcode = array (1788 => 'ucs');
+	global $breed_by_swcode, $breed_by_hwcode, $breed_by_mgmtcode;
 	foreach (getAttrValues ($object_id) as $record)
 		if ($record['id'] == 4 and array_key_exists ($record['key'], $breed_by_swcode))
 			return $breed_by_swcode[$record['key']];
@@ -178,13 +195,33 @@ function assertBreedFunction ($breed, $command)
 
 function queryDevice ($object_id, $command)
 {
+	$query = translateDeviceCommands ($object_id, array (array ('opcode' => $command)));
+	if ($command == 'xlatepushq')
+		return $query;
 	$breed = assertDeviceBreed ($object_id);
 	$funcname = assertBreedFunction ($breed, $command);
 	require_once 'deviceconfig.php';
 	if (! is_callable ($funcname))
 		throw new RTGatewayError ("undeclared function '${funcname}'");
-	$query = translateDeviceCommands ($object_id, array (array ('opcode' => $command)));
-	return $command == 'xlatepushq' ? $query : $funcname (queryTerminal ($object_id, $query, FALSE));
+
+	for ($i = 0; $i < 3; $i++)
+		try
+		{
+			$ret = $funcname (queryTerminal ($object_id, $query, FALSE));
+			break;
+		}
+		catch (ERetryNeeded $e)
+		{
+			// some devices (e.g. Cisco IOS) refuse to print running configuration
+			// while they are busy. The best way of treating this is retry a few times
+			// before failing the request
+			sleep (3);
+			continue;
+		}
+
+	if (NULL !== ($subst = callHook ('alterDeviceQueryResult', $ret, $object_id, $command)))
+		$ret = $subst;
+	return $ret;
 }
 
 function translateDeviceCommands ($object_id, $crq, $vlan_names = NULL)
@@ -195,6 +232,107 @@ function translateDeviceCommands ($object_id, $crq, $vlan_names = NULL)
 	if (! is_callable ($funcname))
 		throw new RTGatewayError ("undeclared function '${funcname}'");
 	return $funcname ($object_id, $crq, $vlan_names);
+}
+
+// takes settings struct (declared in queryTerminal) and CLI commands (plain text) as input by reference
+// returns an array of command-line parameters to $ref_settings[0]['protocol']
+// this function is called by callHook, so you can override/chain it
+// to customize command-line options to particular gateways.
+function makeGatewayParams ($object_id, $tolerate_remote_errors, /*array(&)*/$ref_settings, /*array(&)*/$ref_commands)
+{
+	$ret = array();
+	$settings = &$ref_settings[0];
+	$commands = &$ref_commands[0];
+
+	switch ($settings['protocol'])
+	{
+		case 'sshnokey':
+			$params_from_settings['proto'] = 'proto';
+			$params_from_settings['prompt'] = 'prompt';
+			$params_from_settings['prompt-delay'] = 'prompt_delay';
+			$params_from_settings['username'] = 'username';
+			$params_from_settings['password'] = 'password';
+		case 'telnet':
+		case 'netcat':
+			// prepend telnet commands by credentials
+			if (isset ($settings['password']))
+				$commands = $settings['password'] . "\n" . $commands;
+			if (isset ($settings['username']))
+				$commands = $settings['username'] . "\n" . $commands;
+			break;
+		case 'ucssdk': # remote XML through a Python backend
+			# UCS in its current implementation besides the terminal_settings() provides
+			# an additional username/password feed through the HTML from. Whenever the
+			# user provides the credentials through the form, use these instead of the
+			# credentials [supposedly] set by terminal_settings().
+			global $script_mode;
+			if ($script_mode != TRUE && ! isCheckSet ('use_terminal_settings'))
+			{
+				$settings['username'] = assertStringArg ('ucs_login');
+				$settings['password'] = assertStringArg ('ucs_password');
+			}
+			foreach (array ('hostname', 'username', 'password') as $item)
+				if (empty ($settings[$item]))
+					throw new RTGatewayError ("${item} not available, check terminal_settings()");
+			$commands = "login ${settings['hostname']} ${settings['username']} ${settings['password']}\n" . $commands;
+			break;
+	}
+
+	$ret = array();
+	switch ($settings['protocol'])
+	{
+		case 'telnet':
+			$params_from_settings['port'] = 'port';
+			$params_from_settings['prompt'] = 'prompt';
+			$params_from_settings['connect-timeout'] = 'connect_timeout';
+			$params_from_settings['timeout'] = 'timeout';
+			$params_from_settings['prompt-delay'] = 'prompt_delay';
+			$params_from_settings[] = $settings['hostname'];
+			break;
+		case 'netcat':
+			$params_from_settings['p'] = 'port';
+			$params_from_settings['w'] = 'timeout';
+			$params_from_settings['b'] = 'ncbin';
+			$params_from_settings[] = $settings['hostname'];
+			break;
+		case 'ssh':
+			$params_from_settings['sudo-user'] = 'sudo_user';
+			$params_from_settings[] = '--';
+			$params_from_settings['p'] = 'port';
+			$params_from_settings['l'] = 'username';
+			$params_from_settings['i'] = 'identity_file';
+			if (isset ($settings['proto']))
+				switch ($settings['proto'])
+				{
+					case 4:
+						$params_from_settings[] = '-4';
+						break;
+					case 6:
+						$params_from_settings[] = '-6';
+						break;
+					default:
+						throw new RTGatewayError ("Proto '${settings['proto']}' is invalid. Valid protocols are: '4', '6'");
+				}
+			if (isset ($settings['connect_timeout']))
+				$params_from_settings[] = '-oConnectTimeout=' . $settings['connect_timeout'];
+			$params_from_settings[] = '-T';
+			$params_from_settings[] = '-oStrictHostKeyChecking=no';
+			$params_from_settings[] = '-oBatchMode=yes';
+			$params_from_settings[] = '-oCheckHostIP=no';
+			$params_from_settings[] = '-oLogLevel=ERROR';
+			$params_from_settings[] = $settings['hostname'];
+			break;
+		default:
+			throw RTGatewayError ("Invalid terminal protocol '${settings['protocol']}' specified");
+	}
+
+	foreach ($params_from_settings as $param_name => $setting_name)
+		if (is_int ($param_name))
+			$ret[] = $setting_name;
+		elseif (isset ($settings[$setting_name]))
+			$ret[$param_name] = $settings[$setting_name];
+
+	return $ret;
 }
 
 // This function returns a text output received from the device
@@ -213,51 +351,71 @@ function queryTerminal ($object_id, $commands, $tolerate_remote_errors = TRUE)
 	switch ($breed = detectDeviceBreed ($object_id))
 	{
 		case 'ios12':
-		case 'fdry5':
 		case 'ftos8':
 			$protocol = 'netcat'; // default is netcat mode
-			$prompt = '^(Login|Username|Password): $|^\S+[>#]$'; // set the prompt in case user would like to specify telnet protocol
+			$prompt = '^(Login|Username|Password): $|^\S+[>#]$|\[[^][]*\]\? $'; // set the prompt in case user would like to specify telnet protocol
+			$commands = "terminal length 0\nterminal no monitor\n" . $commands;
 			break;
 		case 'air12':
 			$protocol = 'telnet'; # Aironet IOS is broken
 			$prompt = '^(Username|Password): $|^\S+[>#]$';
+			$commands = "terminal length 0\nterminal no monitor\n" . $commands;
 			break;
-		case 'vrp53':
+		case 'fdry5':
+			$protocol = 'netcat'; // default is netcat mode
+			$prompt = '^(Login|Username|Password): $|^\S+[>#]$'; // set the prompt in case user would like to specify telnet protocol
+			$commands = "skip-page-display\n" . $commands;
+			break;
 		case 'vrp55':
+			$commands = "screen-length 0 temporary\n" . $commands;
+			/* fall-through */
+		case 'vrp53':
 			$protocol = 'telnet';
 			$prompt = '^\[[^[\]]+\]$|^<[^<>]+>$|^(Username|Password):$|(?:\[Y\/N\]|\(Y\/N\)\[[YN]\]):?$';
 			break;
 		case 'nxos4':
 			$protocol = 'telnet';
 			$prompt = '(^([Ll]ogin|[Pp]assword):|[>#]) $';
+			$commands = "terminal length 0\nterminal no monitor\n" . $commands;
 			break;
 		case 'xos12':
 			$protocol = 'telnet';
 			$prompt = ': $|\.\d+ # $|\?\s*\([Yy]\/[Nn]\)\s*$';
+			$commands = "disable clipaging\n" . $commands;
 			break;
 		case 'jun10':
 			$protocol = 'telnet';
 			$prompt = '^login: $|^Password:$|^\S+@\S+[>#] $';
+			$commands = "set cli screen-length 0\n" . $commands;
 			break;
 		case 'eos4':
 			$protocol = 'telnet'; # strict RFC854 implementation, netcat won't work
-			$prompt = '^(\xf2?login|Username|Password): $|^\S+[>#]$';
+			$prompt = '^\xf2?(login|Username|Password): $|^\S+[>#]$';
+			$commands = "enable\nno terminal monitor\nterminal length 0\n" . $commands;
 			break;
 		case 'ros11':
 			$protocol = 'netcat'; # see ftos8 case
 			$prompt = '^(User Name|\rPassword):$|^\r?\S+# $';
+			$commands = "terminal datadump\n" . $commands;
+			$commands .= "\n\n"; # temporary workaround for telnet server
 			break;
 		case 'iosxr4':
 			$protocol = 'telnet';
 			$prompt = '^\r?(Login|Username|Password): $|^\r?\S+[>#]$';
+			$commands = "terminal length 0\nterminal monitor disable\n" . $commands;
 			break;
 		case 'ucs':
 			$protocol = 'ucssdk';
 			break;
-		default:
+		case 'dlink':
 			$protocol = 'netcat';
-			$prompt = NULL;
+			$commands = "disable clipaging\n" . $commands;
+			break;
 	}
+	if (! isset ($protocol))
+		$protocol = 'netcat';
+	if (! isset ($prompt))
+		$prompt = NULL;
 
 	// set the default settings before calling user-defined callback
 	$settings = array
@@ -274,116 +432,15 @@ function queryTerminal ($object_id, $commands, $tolerate_remote_errors = TRUE)
 		'sudo_user' => NULL,
 		'identity_file' => NULL,
 	);
+
+	// override default settings
 	if (is_callable ('terminal_settings'))
-		call_user_func ('terminal_settings', $objectInfo, array (&$settings)); // override settings
-
-	if (! isset ($settings['port']) and $settings['protocol'] == 'netcat')
-		$settings['port'] = 23;
-
-	$params = array	( $settings['hostname'] );
-	$params_from_settings = array();
-	switch ($settings['protocol'])
-	{
-		case 'telnet':
-		case 'netcat':
-			// prepend command list with vendor-specific disabling pager command
-			switch ($breed)
-			{
-				case 'ios12':
-					$commands = "terminal length 0\n" . $commands;
-					break;
-				case 'nxos4':
-				case 'air12':
-				case 'ftos8':
-					$commands = "terminal length 0\nterminal no monitor\n" . $commands;
-					break;
-				case 'xos12':
-					$commands = "disable clipaging\n" . $commands;
-					break;
-				case 'vrp55':
-					$commands = "screen-length 0 temporary\n" . $commands;
-					break;
-				case 'fdry5':
-					$commands = "skip-page-display\n" . $commands;
-					break;
-				case 'jun10':
-					$commands = "set cli screen-length 0\n" . $commands;
-					break;
-				case 'eos4':
-					$commands = "enable\nno terminal monitor\nterminal length 0\n" . $commands;
-					break;
-				case 'ros11':
-					$commands = "terminal datadump\n" . $commands;
-					$commands .= "\n\n"; # temporary workaround for telnet server
-					break;
-				case 'iosxr4':
-					$commands = "terminal length 0\nterminal monitor disable\n" . $commands;
-					break;
-				case 'dlink':
-					$commands = "disable clipaging\n" . $commands;
-					break;
-			}
-			// prepend telnet commands by credentials
-			if (isset ($settings['password']))
-				$commands = $settings['password'] . "\n" . $commands;
-			if (isset ($settings['username']))
-				$commands = $settings['username'] . "\n" . $commands;
-			// command-line options are specific to client: telnet or netcat
-			switch ($settings['protocol'])
-			{
-				case 'telnet':
-					$params_from_settings['port'] = 'port';
-					$params_from_settings['prompt'] = 'prompt';
-					$params_from_settings['connect-timeout'] = 'connect_timeout';
-					$params_from_settings['timeout'] = 'timeout';
-					$params_from_settings['prompt-delay'] = 'prompt_delay';
-					break;
-				case 'netcat':
-					$params_from_settings['p'] = 'port';
-					$params_from_settings['w'] = 'timeout';
-					$params_from_settings['b'] = 'ncbin';
-					break;
-			}
-			break;
-		case 'ssh':
-			$params_from_settings['port'] = 'port';
-			$params_from_settings['proto'] = 'proto';
-			$params_from_settings['username'] = 'username';
-			$params_from_settings['i'] = 'identity_file';
-			$params_from_settings['sudo-user'] = 'sudo_user';
-			$params_from_settings['connect-timeout'] = 'connect_timeout';
-			break;
-		case 'ucssdk': # remote XML through a Python backend
-			$params = array(); # reset
-			# UCS in its current implementation besides the terminal_settings() provides
-			# an additional username/password feed through the HTML from. Whenever the
-			# user provides the credentials through the form, use these instead of the
-			# credentials [supposedly] set by terminal_settings().
-			if ($script_mode != TRUE && ! isCheckSet ('use_terminal_settings'))
-			{
-				genericAssertion ('ucs_login', 'string');
-				genericAssertion ('ucs_password', 'string');
-				$settings['username'] = $_REQUEST['ucs_login'];
-				$settings['password'] = $_REQUEST['ucs_password'];
-			}
-			foreach (array ('hostname', 'username', 'password') as $item)
-				if (empty ($settings[$item]))
-					throw new RTGatewayError ("${item} not available, check terminal_settings()");
-			$commands = "login ${settings['hostname']} ${settings['username']} ${settings['password']}\n" . $commands;
-			break;
-		default:
-			throw RTGatewayError ("Invalid terminal protocol '${settings['protocol']}' specified");
-	}
-	foreach ($params_from_settings as $param_name => $setting_name)
-		if (isset ($settings[$setting_name]))
-			if (is_int ($param_name))
-				$params[] = $settings[$setting_name];
-			else
-				$params[$param_name] = $settings[$setting_name];
-
-	callHook ('alterTerminalParams', $object_id, $tolerate_remote_errors, array (&$settings['protocol']), array (&$params));
-
+		call_user_func ('terminal_settings', $objectInfo, array (&$settings));
+	// make gateway-specific CLI params out of settings
+	$params = callHook ('makeGatewayParams', $object_id, $tolerate_remote_errors, array (&$settings), array (&$commands));
+	// call gateway
 	$ret_code = callScript ($settings['protocol'], $params, $commands, $out, $errors);
+
 	if ($settings['protocol'] != 'ssh' || ! $tolerate_remote_errors)
 	{
 		if (! empty ($errors))

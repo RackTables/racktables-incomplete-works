@@ -275,6 +275,17 @@ function init_config ()
 #	'use_tls' => 2,         // 0 == don't attempt, 1 == attempt, 2 == require
 #);
 
+# For SAML configuration details:
+# http://wiki.racktables.org/index.php?title=SAML
+
+#\$SAML_options = array
+#(
+#	'simplesamlphp_basedir' => '../simplesaml',
+#	'sp_profile' => 'default-sp',
+#	'usernameAttribute' => 'eduPersonPrincipName',
+#	'fullnameAttribute' => 'fullName',
+#);
+
 # This HTML banner is intended to assist users in dispatching their issues
 # to the local tech support service. Its text (in its verbatim form) will
 # be appended to assorted error messages visible in user's browser (including
@@ -574,7 +585,7 @@ CREATE TABLE `File` (
 CREATE TABLE `FileLink` (
   `id` int(10) unsigned NOT NULL auto_increment,
   `file_id` int(10) unsigned NOT NULL,
-  `entity_type` enum('ipv4net','ipv4rspool','ipv4vs','ipv6net','location','object','rack','user') NOT NULL default 'object',
+  `entity_type` enum('ipv4net','ipv4rspool','ipv4vs','ipv6net','location','object','rack','row','user') NOT NULL default 'object',
   `entity_id` int(10) NOT NULL,
   PRIMARY KEY  (`id`),
   KEY `FileLink-file_id` (`file_id`),
@@ -911,7 +922,7 @@ CREATE TABLE `RackSpace` (
   `rack_id` int(10) unsigned NOT NULL default '0',
   `unit_no` int(10) unsigned NOT NULL default '0',
   `atom` enum('front','interior','rear') NOT NULL default 'interior',
-  `state` enum('A','U','T','W') NOT NULL default 'A',
+  `state` enum('A','U','T') NOT NULL default 'A',
   `object_id` int(10) unsigned default NULL,
   PRIMARY KEY  (`rack_id`,`unit_no`,`atom`),
   KEY `RackSpace_object_id` (`object_id`),
@@ -1577,7 +1588,7 @@ INSERT INTO `Config` (varname, varvalue, vartype, emptyok, is_hidden, is_userdef
 ('PREVIEW_IMAGE_MAXPXS','320','uint','yes','no','yes','Max pixels per axis for image file preview'),
 ('VENDOR_SIEVE','','string','yes','no','yes','Vendor sieve configuration'),
 ('IPV4LB_LISTSRC','false','string','yes','no','no','List source: IPv4 load balancers'),
-('IPV4OBJ_LISTSRC','{\$typeid_4} or {\$typeid_7} or {\$typeid_8} or {\$typeid_12} or {\$typeid_445} or {\$typeid_447} or {\$typeid_798} or {\$typeid_1397} or {\$typeid_1502} or {\$typeid_1503} or {\$typeid_1504} or {\$typeid_1507} or {\$typeid_1787}','string','yes','no','no','List source: IPv4-enabled objects'),
+('IPV4OBJ_LISTSRC','{\$typeid_4} or {\$typeid_7} or {\$typeid_8} or {\$typeid_12} or {\$typeid_445} or {\$typeid_447} or {\$typeid_798} or {\$typeid_965} or {\$typeid_1397} or {\$typeid_1502} or {\$typeid_1503} or {\$typeid_1504} or {\$typeid_1507} or {\$typeid_1787}','string','yes','no','no','List source: IPv4-enabled objects'),
 ('IPV4NAT_LISTSRC','{\$typeid_4} or {\$typeid_7} or {\$typeid_8} or {\$typeid_798}','string','yes','no','no','List source: IPv4 NAT performers'),
 ('ASSETWARN_LISTSRC','{\$typeid_4} or {\$typeid_7} or {\$typeid_8}','string','yes','no','no','List source: object, for which asset tag should be set'),
 ('NAMEWARN_LISTSRC','{\$typeid_4} or {\$typeid_7} or {\$typeid_8}','string','yes','no','no','List source: object, for which common name should be set'),
@@ -1625,10 +1636,12 @@ INSERT INTO `Config` (varname, varvalue, vartype, emptyok, is_hidden, is_userdef
 ('MUNIN_LISTSRC','false','string','yes','no','no','List of object with Munin graphs'),
 ('VIRTUAL_OBJ_LISTSRC','1504,1505,1506,1507','string','no','no','no','List source: virtual objects'),
 ('DATETIME_ZONE','UTC','string','yes','no','yes','Timezone to use for displaying/calculating dates'),
-('DATETIME_FORMAT','m/d/Y','string','no','no','yes','PHP date() format to use for date output'),
+('DATETIME_FORMAT','%Y-%m-%d','string','no','no','yes','PHP strftime() format to use for date output'),
 ('SEARCH_DOMAINS','','string','yes','no','yes','DNS domain list (comma-separated) to search in FQDN attributes'),
 ('8021Q_EXTSYNC_LISTSRC','false','string','yes','no','no','List source: objects with extended 802.1Q sync'),
 ('8021Q_MULTILINK_LISTSRC','false','string','yes','no','no','List source: IPv4/IPv6 networks allowing multiple VLANs from same domain'),
+('REVERSED_RACKS_LISTSRC', 'false', 'string', 'yes', 'no', 'no', 'List of racks with reversed (top to bottom) units order'),
+('NEAREST_RACKS_CHECKBOX', 'yes', 'string', 'yes', 'no', 'yes', 'Enable nearest racks in port list filter by default'),
 ('DB_VERSION','${db_version}','string','no','yes','no','Database version.');
 
 INSERT INTO `Script` VALUES ('RackCode','allow {\$userid_1}');

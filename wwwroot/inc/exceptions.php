@@ -79,15 +79,38 @@ class EntityNotFoundException extends RackTablesError
 	}
 }
 
+class ERetryNeeded extends RackTablesError
+{
+	function __construct($message)
+	{
+		$this->code = parent::INTERNAL;
+		parent::__construct ($message);
+	}
+}
+
 // this simplifies construction of RackTablesError, but is never caught
 class InvalidArgException extends RackTablesError
 {
 	function __construct ($name, $value, $reason=NULL)
 	{
-		$message = "Argument '${name}' of value '".var_export($value,true)."' is invalid.";
-		if (!is_null($reason))
-			$message .= ' ('.$reason.')';
+		$message = "Argument '${name}' of value " . var_export ($value, TRUE) . ' is invalid';
+		$message .= is_null ($reason) ? '.' : " (${reason}).";
 		parent::__construct ($message, parent::INTERNAL);
+		$this->name = $name;
+		$this->value = $value;
+		$this->reason = $reason;
+	}
+	public function getName()
+	{
+		return $this->name;
+	}
+	public function getValue()
+	{
+		return $this->value;
+	}
+	public function getReason()
+	{
+		return $this->reason;
 	}
 }
 
@@ -187,24 +210,27 @@ function dumpArray($arr)
 function stringTrace($trace)
 {
 	$ret = '';
-	foreach($trace as $line) {
+	foreach ($trace as $line)
+	{
 		if (isset ($line['file']) && isset ($line['line']))
 			$ret .= $line['file'].':'.$line['line'].' ';
 		$ret .= $line['function'].'(';
 		$f = true;
-		if (isset($line['args']) and is_array($line['args'])) foreach ($line['args'] as $arg) {
-			if (!$f) $ret .= ', ';
-			if (is_string($arg))
-				$printarg = "'".$arg."'";
-			elseif (is_null($arg))
-				$printarg = 'NULL';
-			elseif (is_array($arg))
-				$printarg = print_r($arg, 1);
-			else
-				$printarg = $arg;
-			$ret .= $printarg;
-			$f = false;
-		}
+		if (isset ($line['args']) and is_array ($line['args']))
+			foreach ($line['args'] as $arg)
+			{
+				if (! $f) $ret .= ', ';
+				if (is_string ($arg))
+					$printarg = "'" . $arg . "'";
+				elseif (is_null ($arg))
+					$printarg = 'NULL';
+				elseif (is_array ($arg))
+					$printarg = print_r ($arg, 1);
+				else
+					$printarg = $arg;
+				$ret .= $printarg;
+				$f = false;
+			}
 		$ret .= ")\n";
 	}
 	return $ret;

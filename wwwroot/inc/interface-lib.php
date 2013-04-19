@@ -174,6 +174,9 @@ $image['object']['height'] = 16;
 $image['OBJECT']['path'] = 'pix/bracket-32x32.png';
 $image['OBJECT']['width'] = 32;
 $image['OBJECT']['height'] = 32;
+$image['LOCATION']['path'] = 'pix/tango-internet-32x32.png';
+$image['LOCATION']['width'] = 32;
+$image['LOCATION']['height'] = 32;
 $image['attach']['path'] = 'pix/tango-mail-attachment-16x16.png';
 $image['attach']['width'] = 16;
 $image['attach']['height'] = 16;
@@ -297,7 +300,8 @@ function getSelect ($optionList, $select_attrs = array(), $selected_id = NULL, $
 		return '(none)';
 	if (count ($optionList) == 1 && $treat_single_special)
 	{
-		foreach ($optionList as $key => $value) { break; }
+		foreach ($optionList as $key => $value)
+			break;
 		return "<input type=hidden name=${select_attrs['name']} id=${select_attrs['name']} value=${key}>" . $value;
 	}
 	if (!array_key_exists ('id', $select_attrs))
@@ -796,12 +800,33 @@ function cmpTags ($a, $b)
 	return strcmp ($a['tag'], $b['tag']);
 }
 
+function getTagClassName ($tagid)
+{
+	global $taglist;
+
+	$class = '';
+	foreach ($taglist[$tagid]['trace'] as $parent)
+		$class .= 'tag-' . $parent . ' ';
+	$class .= 'tag-' . $tagid . ' etag-' . $tagid;
+
+	return $class;
+}
+
 function serializeTags ($chain, $baseurl = '')
 {
 	$tmp = array();
 	usort ($chain, 'cmpTags');
 	foreach ($chain as $taginfo)
 	{
+		$title = '';
+		if (isset ($taginfo['user']) and isset ($taginfo['time']))
+			$title = 'title="' . htmlspecialchars ($taginfo['user'] . ', ' . formatAge ($taginfo['time']), ENT_QUOTES) . '"';
+
+		$class = '';
+		if (isset ($taginfo['id']))
+			$class = 'class="' . getTagClassName ($taginfo['id']) . '"';
+
+		$href = '';
 		if ($baseurl == '')
 			$tmp[] = "<span class='badge'>{$taginfo['tag']}</span>";
 		else
@@ -812,6 +837,7 @@ function serializeTags ($chain, $baseurl = '')
 			}
 			$tmp[] = "<a data-toggle='tooltip' $title href='${baseurl}cft[]=${taginfo['id']}'><span class='badge'>" . $taginfo['tag'] . "</span></a>";
 		}
+//		$tmp[] = "<$tag $href $title $class>" . $taginfo['tag'] . "</$tag>";
 	}
 	return implode ('', $tmp);
 }

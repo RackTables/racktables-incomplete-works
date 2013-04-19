@@ -198,7 +198,6 @@ $searchfunc = array
 (
 	'object' => array
 	(
-		'by_sticker' => 'getStickerSearchResults',
 		'by_port' => 'getPortSearchResults',
 		'by_attr' => 'getObjectAttrsSearchResults',
 		'by_iface' => 'getObjectIfacesSearchResults',
@@ -512,8 +511,8 @@ function listCells ($realm, $parent_id = 0)
 	return $ret;
 }
 
-// Very much like listCells(), but return only one record requested (or NULL,
-// if it does not exist).
+// Very much like listCells(), but return only one record requested
+// throws an exception if entity not exists
 function spotEntity ($realm, $id, $ignore_cache = FALSE)
 {
 	global $entityCache;
@@ -685,7 +684,6 @@ function amplifyCell (&$record, $dummy = NULL)
 	case 'row':
 		$record['racks'] = getRacks ($record['id']);
 	case 'rack':
-		$record['mountedObjects'] = array();
 		// start with default rackspace
 		for ($i = $record['height']; $i > 0; $i--)
 			for ($locidx = 0; $locidx < 3; $locidx++)
@@ -698,7 +696,9 @@ function amplifyCell (&$record, $dummy = NULL)
 		$result = usePreparedSelectBlade ($query, array ($record['id'], $record['height']));
 		global $loclist;
 		$mounted_objects = array();
-		while ($row = $result->fetch (PDO::FETCH_ASSOC))
+		$rows = $result->fetchAll (PDO::FETCH_ASSOC); 
+		$record['isDeletable'] = (count ($rows)) ? FALSE : TRUE;
+		foreach ($rows as $row)
 		{
 			$record[$row['unit_no']][$loclist[$row['atom']]]['state'] = $row['state'];
 			$record[$row['unit_no']][$loclist[$row['atom']]]['object_id'] = $row['object_id'];
@@ -815,7 +815,8 @@ function getObjectPortsAndLinks ($object_id)
 
 // Fetch the object type via SQL.
 // spotEntity cannot be used because it references RackObject, which doesn't suit Racks, Rows, or Locations.
-function getObjectType ($object_id) {
+function getObjectType ($object_id)
+{
 	$result = usePreparedSelectBlade ('SELECT objtype_id from Object WHERE id = ?', array ($object_id));
 	return $result->fetchColumn ();
 }
@@ -1214,15 +1215,6 @@ function commitResetObject ($object_id = 0)
 	usePreparedDeleteBlade ('CactiGraph', array ('object_id' => $object_id));
 	# Munin graphs
 	usePreparedDeleteBlade ('MuninGraph', array ('object_id' => $object_id));
-}
-
-function commitDeleteRack($rack_id)
-{
-	releaseFiles ('rack', $rack_id);
-	destroyTagsForEntity ('rack', $rack_id);
-	usePreparedDeleteBlade ('RackSpace', array ('rack_id' => $rack_id));
-	usePreparedDeleteBlade ('RackHistory', array ('id' => $rack_id));
-	usePreparedDeleteBlade ('Rack', array ('id' => $rack_id));
 }
 
 function commitUpdateRack ($rack_id, $new_row_id, $new_name, $new_height, $new_has_problems, $new_asset_no, $new_comment)
@@ -2261,17 +2253,9 @@ function fetchIPAddressNetworkRow ($ip_bin, $masklen = NULL)
 	switch (strlen ($ip_bin))
 	{
 	case 4:
-		if (isset ($masklen))
-			return fetchIPv4AddressNetworkRow ($ip_bin, $masklen);
-		else
-			return fetchIPv4AddressNetworkRow ($ip_bin);
-		break;
+		return callHook ('fetchIPv4AddressNetworkRow', $ip_bin, isset ($masklen) ? $masklen : 32);
 	case 16:
-		if (isset ($masklen))
-			return fetchIPv6AddressNetworkRow ($ip_bin, $masklen);
-		else
-			return fetchIPv6AddressNetworkRow ($ip_bin);
-		break;
+		return callHook ('fetchIPv6AddressNetworkRow', $ip_bin, isset ($masklen) ? $masklen : 128);
 	default:
 		throw new InvalidArgException ('ip_bin', $ip_bin, "Invalid binary address");
 	}
@@ -2602,6 +2586,7 @@ function getAccountSearchResult ($terms)
 		foreach ($array as $user)
 		{
 			$user['realm'] = 'user';
+			$user['id'] = $user['user_id'];
 			$ret[$user['user_id']] = $user;
 		}
 	return $ret;
@@ -2665,57 +2650,76 @@ function getRackSearchResult ($terms)
 		$terms,
 		'name'
 	);
+	$bySticker = getStickerSearchResults ('Rack', $terms);
 	// Filter out dupes.
 	foreach ($byName as $res1)
 	{
 		foreach (array_keys ($byComment) as $key2)
 			if ($res1['id'] == $byComment[$key2]['id'])
 				unset ($byComment[$key2]);
-		foreach (array_keys ($byAssetNo) as $key4)
-			if ($res1['id'] == $byAssetNo[$key4]['id'])
-				unset ($byAssetNo[$key4]);
+		foreach (array_keys ($byAssetNo) as $key3)
+			if ($res1['id'] == $byAssetNo[$key3]['id'])
+				unset ($byAssetNo[$key3]);
+		foreach (array_keys ($bySticker) as $key4)
+			if ($res1['id'] == $bySticker[$key4]['id'])
+				unset ($bySticker[$key4]);
 	}
 	$ret = array();
-	foreach (array_merge ($byName, $byComment, $byAssetNo) as $row)
+	foreach (array_merge ($byName, $byComment, $byAssetNo, $bySticker) as $row)
 		$ret[$row['id']] = spotEntity ('rack', $row['id']);
+	return $ret;
+}
+
+function getLocationSearchResult ($terms)
+{
+	$byName = getSearchResultByField
+	(
+		'Location',
+		array ('id'),
+		'name',
+		$terms,
+		'name'
+	);
+	$byComment = getSearchResultByField
+	(
+		'Location',
+		array ('id'),
+		'comment',
+		$terms,
+		'name'
+	);
+	$bySticker = getStickerSearchResults ('Location', $terms);
+	// Filter out dupes.
+	foreach ($byName as $res1)
+	{
+		foreach (array_keys ($byComment) as $key2)
+			if ($res1['id'] == $byComment[$key2]['id'])
+				unset ($byComment[$key2]);
+		foreach (array_keys ($bySticker) as $key3)
+			if ($res1['id'] == $bySticker[$key3]['id'])
+				unset ($bySticker[$key3]);
+	}
+	$ret = array();
+	foreach (array_merge ($byName, $byComment, $bySticker) as $location)
+		$ret[$location['id']] = spotEntity ('location', $location['id']);
 	return $ret;
 }
 
 function getVLANSearchResult ($terms)
 {
 	$ret = array();
-	$matches = array();
-	if (preg_match ('/^vlan\s*(\d+)$/i', $terms, $matches))
+	$byDescr = getSearchResultByField
+	(
+		'VLANDescription',
+		array ('domain_id', 'vlan_id'),
+		'vlan_descr',
+		$terms
+	);
+	foreach ($byDescr as $row)
 	{
-		$byID = getSearchResultByField
-		(
-			'VLANDescription',
-			array ('domain_id', 'vlan_id'),
-			'vlan_id',
-			$matches[1],
-			'domain_id',
-			1
-		);
-		foreach ($byID as $row)
-		{
-			$vlan_ck = $row['domain_id'] . '-' . $row['vlan_id'];
-			$ret[$vlan_ck] = $vlan_ck;
-		}
-	}
-	else
-	{
-		$byDescr = getSearchResultByField
-		(
-			'VLANDescription',
-			array ('domain_id', 'vlan_id'),
-			'vlan_descr',
-			$terms
-		);
-		foreach ($byDescr as $row)
-		{
-			$vlan_ck = $row['domain_id'] . '-' . $row['vlan_id'];
-			$ret[$vlan_ck] = $vlan_ck;
-		}
+		$vlan_ck = $row['domain_id'] . '-' . $row['vlan_id'];
+		$row['id'] = $vlan_ck;
+		$ret[$vlan_ck] = $row;
 	}
 	return $ret;
 }
@@ -2729,6 +2733,10 @@ function getSearchResultByField ($tablename, $retcolumns, $scancolumn, $terms, $
 	{
 		switch ($exactness)
 		{
+		case 3:
+			$query .= $pfx . "${scancolumn} REGEXP ?";
+			$qparams[] = $term;
+			break;
 		case 2: // does this work as expected?
 			$query .= $pfx . "BINARY ${scancolumn} = ?";
 			$qparams[] = $term;
@@ -2760,6 +2768,11 @@ function getObjectSearchResults ($what)
 			$ret[$objRecord['id']]['id'] = $objRecord['id'];
 			$ret[$objRecord['id']][$method] = $objRecord[$method];
 		}
+	foreach (getStickerSearchResults ('RackObject', $what) as $objRecord)
+	{
+		$ret[$objRecord['id']]['id'] = $objRecord['id'];
+		$ret[$objRecord['id']]['by_sticker'] = $objRecord['by_sticker'];			
+	}
 	return $ret;
 }
 
@@ -2785,28 +2798,29 @@ function getObjectAttrsSearchResults ($what)
 	return $ret;
 }
 
-// Look for EXACT value in stickers and return a list of pairs "object_id-attribute_id",
-// which matched. A partilar object_id could be returned more, than once, if it has
+// Search stickers and return a list of pairs "object_id-attribute_id",
+// which matched. A partilar object_id could be returned more than once, if it has
 // multiple matching stickers. Search is only performed on "string" attributes.
-function getStickerSearchResults ($what, $exactness = 0)
+function getStickerSearchResults ($tablename, $what)
 {
-	$stickers = getSearchResultByField
+	$result = usePreparedSelectBlade
 	(
-		'AttributeValue',
-		array ('object_id', 'attr_id'),
-		'string_value',
-		$what,
-		'object_id',
-		$exactness
+		'SELECT object_id, attr_id FROM AttributeValue AV ' .
+		"INNER JOIN ${tablename} O ON AV.object_id = O.id " .
+		'WHERE string_value LIKE ? ORDER BY object_id',
+		array ("%${what}%")
 	);
+
 	$map = getAttrMap();
 	$ret = array();
-	foreach ($stickers as $sticker)
-		if ($map[$sticker['attr_id']]['type'] == 'string')
+	while ($row = $result->fetch (PDO::FETCH_ASSOC))
+	{
+		if ($map[$row['attr_id']]['type'] == 'string')
 		{
-			$ret[$sticker['object_id']]['id'] = $sticker['object_id'];
-			$ret[$sticker['object_id']]['by_sticker'][] = $sticker['attr_id'];
+			$ret[$row['object_id']]['id'] = $row['object_id'];
+			$ret[$row['object_id']]['by_sticker'][] = $row['attr_id'];
 		}
+	}
 	return $ret;
 }
 
@@ -4259,6 +4273,12 @@ function getFileLinks ($file_id)
 				$parent = spotEntity ($row['entity_type'], $row['entity_id']);
 				$name = $parent['name'];
 				break;
+			case 'row':
+				$page = 'row';
+				$id_name = 'row_id';
+				$parent = spotEntity ($row['entity_type'], $row['entity_id']);
+				$name = $parent['name'];
+				break;
 			case 'rack':
 				$page = 'rack';
 				$id_name = 'rack_id';
@@ -4331,7 +4351,8 @@ function commitAddFile ($name, $type, $contents, $comment)
 	}
 	try
 	{
-		$query = $dbxlink->prepare ('INSERT INTO File (name, type, ctime, mtime, atime, contents, comment) VALUES (?, ?, NOW(), NOW(), NOW(), ?, ?)');
+		# File.size has no default value, set to 0 with MySQL strict mode in mind.
+		$query = $dbxlink->prepare ('INSERT INTO File (name, type, size, ctime, mtime, atime, contents, comment) VALUES (?, ?, 0, NOW(), NOW(), NOW(), ?, ?)');
 		$query->bindParam (1, $name);
 		$query->bindParam (2, $type);
 		$query->bindParam (3, $contents, PDO::PARAM_LOB);
@@ -4650,13 +4671,10 @@ function getVLANSwitchInfo ($object_id, $extrasql = '')
 	$result = usePreparedSelectBlade
 	(
 		'SELECT object_id, domain_id, template_id, mutex_rev, out_of_sync, last_errno, ' .
-		'TIMESTAMPDIFF(SECOND, last_push_started, last_push_finished) AS last_push_lasted, ' .
-		'SEC_TO_TIME(TIMESTAMPDIFF(SECOND, last_change, NOW())) AS last_change_age, ' .
-		'TIMESTAMPDIFF(SECOND, last_change, NOW()) AS last_change_age_seconds, ' .
-		'SEC_TO_TIME(TIMESTAMPDIFF(SECOND, last_error_ts, NOW())) AS last_error_age, ' .
-		'TIMESTAMPDIFF(SECOND, last_error_ts, NOW()) AS last_error_age_seconds, ' .
-		'SEC_TO_TIME(TIMESTAMPDIFF(SECOND, last_push_finished, NOW())) AS last_push_age, ' .
-		'last_change, last_push_finished, last_error_ts ' .
+		'UNIX_TIMESTAMP(last_change) as last_change, ' .
+		'UNIX_TIMESTAMP(last_push_started) as last_push_started, ' .
+		'UNIX_TIMESTAMP(last_push_finished) as last_push_finished, ' .
+		'UNIX_TIMESTAMP(last_error_ts) as last_error_ts ' .
 		'FROM VLANSwitch WHERE object_id = ? ' . $extrasql,
 		array ($object_id)
 	);
