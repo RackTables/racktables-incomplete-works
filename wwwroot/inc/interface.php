@@ -908,7 +908,7 @@ function renderEditObjectForm()
 		}
 		echo '<div class="control-group"><label class="control-label" >Select container:</label><div class="controls">';
 
-		echo "<span class='btn'";
+		echo "<span class='btn' style='width:194px;'";
 		$helper_args = array ('object_id' => $object_id);
 		$popup_args = 'height=700, width=400, location=no, menubar=no, '.
 			'resizable=yes, scrollbars=yes, status=no, titlebar=no, toolbar=no';
@@ -1599,7 +1599,7 @@ function renderPortsForObject ($object_id)
 	}
 	if (getConfigVar ('ADDNEW_AT_TOP') != 'yes')
 		printNewItemTR ($prefs);
-	echo "</table><br>\n";
+	echo "</table>\n";
 	if (getConfigVar ('ADDNEW_AT_TOP') != 'yes' && getConfigVar('ENABLE_BULKPORT_FORM') == 'yes'){
 		echo "<table cellspacing=0 cellpadding='5' align='center' class='widetable'>\n";
 		echo "<tr><th>&nbsp;</th><th class=tdleft>Local name</th><th class=tdleft>Visible label</th><th class=tdleft>Interface</th><th class=tdleft>Start Number</th>";
@@ -3127,14 +3127,13 @@ function renderNATv4ForObject ($object_id)
 		echo "</a>";
 		echo ":<input type='text' name='remoteport' size='4' tabindex=4></td><td></td>";
 		echo "<td colspan=1><input type='text' name='description' size='20' tabindex=5></td><td>";
-		printImageHREF ('i:ok', '', TRUE, 6); //'Add new NAT rule'
+		printImageHREF ('i:ok', 't:Save', TRUE, 6); //'Add new NAT rule'
 		echo "</td></tr></form>";
 	}
 
 	$focus = spotEntity ('object', $object_id);
 	amplifyCell ($focus);
-	echo "<center><h4>Locally performed NAT</h4></center>";
-
+	startPortlet('Locally performed NAT',12);
 	echo "<table class='widetable' cellpadding=5 cellspacing=0 border=0 align='center'>\n";
 	echo "<tr><th></th><th>Match endpoint</th><th>Translate to</th><th>Target object</th><th>Comment</th><th>&nbsp;</th></tr>\n";
 
@@ -3198,17 +3197,23 @@ function renderNATv4ForObject ($object_id)
 	if (getConfigVar ('ADDNEW_AT_TOP') != 'yes')
 		printNewItemTR ($focus['ipv4']);
 
-	echo "</table><br><br>";
+	echo "</table>";
+	finishPortlet();
 	if (!count ($focus['nat4']))
 		return;
 
-	echo "<center><h4>Arriving NAT connections</h4></center>";
-	echo "<table class='widetable' cellpadding=5 cellspacing=0 border=0 align='center'>\n";
-	echo "<tr><th></th><th>Source</th><th>Source objects</th><th>Target</th><th>Description</th></tr>\n";
+	startPortlet('Arriving NAT connections',12);
+	echo "<table class='table table-striped' cellpadding=5 cellspacing=0 border=0 align='center'>\n";
+	echo "<thead><tr><th>Source</th><th>Source objects</th><th>Target</th><th>Description</th><th></th></tr></thead>\n";
 
 	foreach ($focus['nat4']['in'] as $pf)
 	{
-		echo "<tr><td><a href='".
+		echo "<tr>";
+		echo "<td>${pf['proto']}/" . getRenderedIPPortPair ($pf['localip'], $pf['localport']) . "</td>";
+		echo '<td class="description">' . mkA ($pf['object_name'], 'object', $pf['object_id']);
+		echo "</td><td>" . getRenderedIPPortPair ($pf['remoteip'], $pf['remoteport']) . "</td>";
+		echo "<td class='description'>${pf['description']}</td>";
+		echo "<td><a class='btn' title='Delete NAT rule' data-toggle='tooltip' href='".
 			makeHrefProcess(array(
 				'op'=>'delNATv4Rule',
 				'localip'=>$pf['localip'],
@@ -3218,15 +3223,12 @@ function renderNATv4ForObject ($object_id)
 				'proto'=>$pf['proto'],
 				)).
 		"'>";
-		printImageHREF ('delete', 'Delete NAT rule');
-		echo "</a></td>";
-		echo "<td>${pf['proto']}/" . getRenderedIPPortPair ($pf['localip'], $pf['localport']) . "</td>";
-		echo '<td class="description">' . mkA ($pf['object_name'], 'object', $pf['object_id']);
-		echo "</td><td>" . getRenderedIPPortPair ($pf['remoteip'], $pf['remoteport']) . "</td>";
-		echo "<td class='description'>${pf['description']}</td></tr>";
+		printImage ('i:trash');
+		echo "</a></td></tr>";
 	}
 
-	echo "</table><br><br>";
+	echo "</table>";
+	finishPortlet();
 }
 
 function renderAddMultipleObjectsForm ()
@@ -5144,8 +5146,7 @@ function renderCellFilterPortlet ($preselect, $realm, $cell_list = array(), $byp
 		count ($preselect['pnamelist']) +
 		(mb_strlen ($preselect['extratext']) ? 1 : 0)
 	);
-	$title = $filterc ? "Tag filters (${filterc})" : 'Tag filters';
-	startPortlet ($title,4,$classes);
+	startPortlet ('Tag filters',4,$classes,(($filterc)?$filterc:null));
 	echo '<div style="padding:19px;">';
 	echo "<form style='margin-bottom:0px;' method=get>\n";
 	$ruler = "<hr>";

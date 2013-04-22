@@ -220,6 +220,9 @@ line-height:0;
 clear:both;
 }
 
+a [class^="icon-"], a [class*=" icon-"],span [class^="icon-"], span [class*=" icon-"]  {
+	margin-top: 3px;
+}
 
 .box {
 -webkit-box-shadow:0 2px 2px -2px #ccc;

@@ -872,17 +872,17 @@ function printTagTRs ($cell, $baseurl = '')
 {
 	if (getConfigVar ('SHOW_EXPLICIT_TAGS') == 'yes' and count ($cell['etags']))
 	{
-		echo "<dt>Explicit tags:</dt><dd>";
+		echo "<dt class='tagchain'>Explicit tags:</dt><dd>";
 		echo serializeTags ($cell['etags'], $baseurl) . "</dd>";
 	}
 	if (getConfigVar ('SHOW_IMPLICIT_TAGS') == 'yes' and count ($cell['itags']))
 	{
-		echo "<dt>Implicit tags:</dt><dd>";
+		echo "<dt class='tagchain'>Implicit tags:</dt><dd>";
 		echo serializeTags ($cell['itags'], $baseurl) . "</dd>\n";
 	}
 	if (getConfigVar ('SHOW_AUTOMATIC_TAGS') == 'yes' and count ($cell['atags']))
 	{
-		echo "<dt>Automatic tags:</dt><dd>";
+		echo "<dt class='tagchain'>Automatic tags:</dt><dd>";
 		echo serializeTags ($cell['atags']) . "</dd>\n";
 	}
 }
@@ -1038,7 +1038,7 @@ function getProgressBar ($percentage = 0, $theme = '', $inline = FALSE)
 	}
 	$ret = "<img width=150 height=10 border=0 title='${done}%' src='$src'>";
 
-	return'<div class="progress" style="width:150px;margin-top:6px;margin-bottom:6px;"><div class="bar" style="width: '.$done.'%;"></div></div>';
+	return'<div class="progress" data-toggle="tooltip" title="' . $done .'%" style="width:150px;margin-top:6px;margin-bottom:6px;"><div class="bar" style="width: '.$done.'%;"></div></div>';
 
 	return $ret;
 }
