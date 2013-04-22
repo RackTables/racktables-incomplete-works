@@ -139,8 +139,8 @@ function renderInterfaceHTML ($pageno, $tabno, $payload)
 
 
     <div class="row">
-        <div class="span12">           
-			<?php showPathAndSearch ($pageno); ?>			
+        <div class="span12">
+			<?php showPathAndSearch ($pageno); ?>
         </div>
    </div>
 
@@ -642,7 +642,7 @@ function renderRow ($row_id)
 	$rackListIdx = 0;
 	$order = 'odd';
 
-	startPortlet ('Racks',4);
+	startPortlet ('Racks',8);
 	echo "<table border=0 cellspacing=5 align='center'><tr>";
 	foreach ($rackList as $rack)
 	{
@@ -675,9 +675,9 @@ function printObjectDetailsForRenderRack ($object_id)
 {
 	$objectData = spotEntity ('object', $object_id);
 	if (strlen ($objectData['asset_no']))
-		$prefix = "<div title='${objectData['asset_no']}";
+		$prefix = "<div data-toggle='tooltip' title='${objectData['asset_no']}";
 	else
-		$prefix = "<div title='no asset tag";
+		$prefix = "<div data-toggle='tooltip' title='no asset tag";
 	// Don't tell about label, if it matches common name.
 	$body = '';
 	if ($objectData['name'] != $objectData['label'] and strlen ($objectData['label']))
@@ -860,12 +860,12 @@ function renderEditObjectForm()
 	printOpFormIntro ('update',array(),false,'form-flush');
 
 	// static attributes
-	echo '<div class="control-group"><label class="control-label" for="inputEmail">Type:</label><div class="controls">';
+	echo '<div class="control-group"><label class="control-label" >Type:</label><div class="controls">';
 	printSelect (getObjectTypeChangeOptions ($object['id']), array ('name' => 'object_type_id'), $object['objtype_id']);
 	echo'</div></div>';
 
 	// baseline info
-	echo '<div class="control-group"><label class="control-label" for="inputEmail">Common name:</label><div class="controls">';
+	echo '<div class="control-group"><label class="control-label" >Common name:</label><div class="controls">';
 	echo "<input type=text name=object_name value='${object['name']}'>";
 	echo'</div></div>';
 
@@ -876,11 +876,11 @@ function renderEditObjectForm()
 	}
 	else
 	{
-		echo '<div class="control-group"><label class="control-label" for="inputEmail">Visible label:</label><div class="controls">';
+		echo '<div class="control-group"><label class="control-label" >Visible label:</label><div class="controls">';
 		echo "<input type=text name=object_label value='${object['label']}'>";
 		echo'</div></div>';
 
-		echo '<div class="control-group"><label class="control-label" for="inputEmail">Asset tag:</label><div class="controls">';
+		echo '<div class="control-group"><label class="control-label" >Asset tag:</label><div class="controls">';
 		echo "<input type=text name=object_asset_no value='${object['asset_no']}'>";
 		echo'</div></div>';
 	}
@@ -892,7 +892,7 @@ function renderEditObjectForm()
 		{
 			if (!isset($label))
 				$label = count($parents) > 1 ? 'Containers:' : 'Container:';
-			echo '<div class="control-group"><label class="control-label" for="inputEmail">' .  $label . '</label><div class="controls">';
+			echo '<div class="control-group"><label class="control-label" >' .  $label . '</label><div class="controls">';
 			echo mkA ($parent_details['name'], 'object', $parent_details['entity_id']);
 			echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
 			echo "<a class='btn' data-toggle='tooltip' title='Unlink container' href='".
@@ -906,7 +906,7 @@ function renderEditObjectForm()
 			echo'</div></div>';
 			$label = '&nbsp;';
 		}
-		echo '<div class="control-group"><label class="control-label" for="inputEmail">Select container:</label><div class="controls">';
+		echo '<div class="control-group"><label class="control-label" >Select container:</label><div class="controls">';
 
 		echo "<span class='btn'";
 		$helper_args = array ('object_id' => $object_id);
@@ -943,7 +943,7 @@ function renderEditObjectForm()
 				echo '&nbsp;';
 			echo '</td>';
 			*/
-			echo '<div class="control-group"><label class="control-label" for="inputEmail">' . $record['name'] . ':</label><div class="controls">';
+			echo '<div class="control-group"><label class="control-label" >' . $record['name'] . ':</label><div class="controls">';
 			switch ($record['type'])
 			{
 				case 'uint':
@@ -972,7 +972,7 @@ function renderEditObjectForm()
     echo '<input name="object_has_problems" type="checkbox" ' . ($object['has_problems'] == 'yes'?'checked="checked"':'')  . ' > Has problems';
     echo '</label></div></div>';
 
-	echo '<div class="control-group"><label class="control-label" for="inputEmail">Comment:</label><div class="controls">';
+	echo '<div class="control-group"><label class="control-label" >Comment:</label><div class="controls">';
 	echo "<textarea name=object_comment rows=10 cols=80>${object['comment']}</textarea>";
 	echo'</div></div>';
 
@@ -1010,16 +1010,16 @@ function renderEditRackForm ($rack_id)
 	startPortlet ('Attributes',12,'tpadded');
 	printOpFormIntro ('updateRack',array(),false,'form-flush');
 
-	echo'<div class="control-group"><label class="control-label" for="inputEmail">Rack row:</label><div class="controls">';
+	echo'<div class="control-group"><label class="control-label" >Rack row:</label><div class="controls">';
 	foreach (getAllRows () as $row_id => $rowInfo)
 		$rows[$row_id] = $rowInfo['name'];
     natcasesort ($rows);
 	printSelect ($rows, array ('name' => 'row_id'), $rack['row_id']);
 	echo '</div></div>';
 
-	echo '<div class="control-group"><label class="control-label" for="inputEmail">Name (required):</label><div class="controls"><input type=text name=name value="' . $rack['name'] . '"></div></div>';
-	echo '<div class="control-group"><label class="control-label" for="inputEmail">Height (required):</label><div class="controls"><input type=text name=height value="' . $rack['height'] . '"></div></div>';
-	echo '<div class="control-group"><label class="control-label" for="inputEmail">Asset tag:</label><div class="controls"><input type=text name=asset_no value="' . $rack['asset_no'] . '"></div></div>';
+	echo '<div class="control-group"><label class="control-label" >Name (required):</label><div class="controls"><input type=text name=name value="' . $rack['name'] . '"></div></div>';
+	echo '<div class="control-group"><label class="control-label" >Height (required):</label><div class="controls"><input type=text name=height value="' . $rack['height'] . '"></div></div>';
+	echo '<div class="control-group"><label class="control-label" >Asset tag:</label><div class="controls"><input type=text name=asset_no value="' . $rack['asset_no'] . '"></div></div>';
 
 	// optional attributes
 	$values = getAttrValues ($rack_id);
@@ -1045,7 +1045,7 @@ function renderEditRackForm ($rack_id)
 		else
 
 
-		echo'<div class="control-group"><label class="control-label" for="inputEmail">' . $record['name'] .'</label><div class="controls">';
+		echo'<div class="control-group"><label class="control-label" >' . $record['name'] .'</label><div class="controls">';
 
 		switch ($record['type'])
 		{
@@ -1071,14 +1071,14 @@ function renderEditRackForm ($rack_id)
 
 	if ($rack['isDeletable'])
 	{
-		echo'<div class="control-group"><label class="control-label" for="inputEmail">Actions:</label><div class="controls">';
+		echo'<div class="control-group"><label class="control-label" >Actions:</label><div class="controls">';
 		echo "<a class='btn' href='".
 			makeHrefProcess(array('op'=>'deleteRack')).
 			"' onclick=\"javascript:return confirm('Are you sure you want to delete the rack?')\">" . getImage ('i:trash', 'Delete rack') . " Delete</a>";
 		echo '</div></div>';
 	}
 
-	echo '<div class="control-group"><label class="control-label" for="inputEmail">Comment:</label><div class="controls"><textarea name=comment rows=5 cols=80>' . $rack['comment'] . '</textarea></div></div>';
+	echo '<div class="control-group"><label class="control-label" >Comment:</label><div class="controls"><textarea name=comment rows=5 cols=80>' . $rack['comment'] . '</textarea></div></div>';
 
 
 	echo '<div class="form-actions form-flush">';
@@ -1372,9 +1372,9 @@ function renderObject ($object_id)
 		if (count($forwards['out']))
 		{
 
-			echo "<h3>locally performed NAT</h3>";
+			echo "<div class='padded'>Locally performed NAT</div>";
 
-			echo "<table class='widetable' cellpadding=5 cellspacing=0 border=0 align='center'>\n";
+			echo "<table class='table table-striped'>";
 			echo "<tr><th>Proto</th><th>Match endpoint</th><th>Translate to</th><th>Target object</th><th>Rule comment</th></tr>\n";
 
 			foreach ($forwards['out'] as $pf)
@@ -1398,12 +1398,12 @@ function renderObject ($object_id)
 					echo '(' . $pf['remote_addr_name'] . ')';
 				echo "</td><td class='description'>${pf['description']}</td></tr>";
 			}
-			echo "</table><br><br>";
+			echo "</table>";
 		}
 		if (count($forwards['in']))
 		{
-			echo "<h3>arriving NAT connections</h3>";
-			echo "<table class='widetable' cellpadding=5 cellspacing=0 border=0 align='center'>\n";
+			echo "<div class='padded'>arriving NAT connections</div>";
+			echo "<table class='table table-striped'>";
 			echo "<tr><th>Matched endpoint</th><th>Source object</th><th>Translated to</th><th>Rule comment</th></tr>\n";
 			foreach ($forwards['in'] as $pf)
 			{
@@ -1418,8 +1418,10 @@ function renderObject ($object_id)
 		finishPortlet();
 		echo '</div>';
 	}
-
+	echo '<div class="row">';
 	renderSLBTriplets ($info);
+	echo "</div>";
+
 
 	echo "</div>";
 
@@ -1648,7 +1650,7 @@ function renderIPForObject ($object_id)
 		if (getConfigVar ('EXT_IPV4_VIEW') == 'yes')
 			echo "<td colspan=2>&nbsp;</td>"; // network, routed by
 		echo '<td>';
-		printSelect ($aat, array ('name' => 'bond_type', 'tabindex' => 102), $default_type); // type
+		printSelect ($aat, array ('name' => 'bond_type', 'tabindex' => 102), $default_type,'span2'); // type
 		echo "</td><td></td><td>"; // misc
 		printImageHREF ('i:plus', '', TRUE, 103); // right btn 'allocate'
 		echo "</td></tr></form>";
@@ -1688,9 +1690,9 @@ function renderIPForObject ($object_id)
 			$alloc_list .= $rendered_alloc['td_network'];
 			$alloc_list .= $rendered_alloc['td_routed_by'];
 		}
-		$alloc_list .= '<td>' . getSelect ($aat, array ('name' => 'bond_type'), $alloc['type']) . "</td>";
+		$alloc_list .= '<td>' . getSelect ($aat, array ('name' => 'bond_type'), $alloc['type'],true,'span2') . "</td>";
 		$alloc_list .= $rendered_alloc['td_peers'];
-		$alloc_list .= "<td>" .getImageHREF ('i:ok', '', TRUE) . "<a class='btn' href='" .
+		$alloc_list .= "<td><div class='btn-group'>" .getImageHREF ('i:ok', '', TRUE) . "<a class='btn' href='" .
 			makeHrefProcess
 			(
 				array
@@ -1700,7 +1702,7 @@ function renderIPForObject ($object_id)
 				)
 			) . "'>" .
 			getImage ('i:trash', 'Delete this IP address') .
-			"</a></td>";
+			"</a></div></td>";
 
 		$alloc_list .= "</form></tr>\n";
 	}
@@ -2463,19 +2465,19 @@ END
 	// inputs column
 	$prefix_value = empty ($_REQUEST['set-prefix']) ? '' : $_REQUEST['set-prefix'];
 
-	echo '<div class="control-group"><label class="control-label" for="inputEmail">Prefix:</label><div class="controls"><input type=text tabindex=1 class="live-validate" name=range value="' . $prefix_value . '"></div></div>';
+	echo '<div class="control-group"><label class="control-label" >Prefix:</label><div class="controls"><input type=text tabindex=1 class="live-validate" name=range value="' . $prefix_value . '"></div></div>';
 
-	echo '<div class="control-group"><label class="control-label" for="inputEmail">VLAN:</label><div class="controls">';
+	echo '<div class="control-group"><label class="control-label" >VLAN:</label><div class="controls">';
 	echo getOptionTree ('vlan_ck', getAllVLANOptions(), array ('select_class' => 'vertical', 'tabindex' => 2)) ;
 	echo'</div></div>';
 
-	echo '<div class="control-group"><label class="control-label" for="inputEmail">Name:</label><div class="controls"><input type=text tabindex=3 class="live-validate" name=name></div></div>';
+	echo '<div class="control-group"><label class="control-label" >Name:</label><div class="controls"><input type=text tabindex=3 class="live-validate" name=name></div></div>';
 
 		echo '<div class="control-group"><div class="controls"><label class="checkbox">';
     echo '<input name="is_connected" type="checkbox" > reserve subnet-router anycast address';
     echo '</label></div></div>';
 
-	echo '<div class="control-group"><label class="control-label" for="inputEmail">Tags:</label><div class="controls">';
+	echo '<div class="control-group"><label class="control-label" >Tags:</label><div class="controls">';
 	renderNewEntityTags ($realm);
 	echo'</div></div>';
 
@@ -2885,12 +2887,12 @@ function renderIPNetworkProperties ($id)
 
 	printOpFormIntro ('editRange',array(),false,'form-flush');
 
-	echo '<div class="control-group"><label class="control-label" for="inputEmail">Name:</label><div class="controls">';
+	echo '<div class="control-group"><label class="control-label" >Name:</label><div class="controls">';
 	echo "<input type=text name=name id=nameinput maxlength=255 value='";
 	echo htmlspecialchars ($netdata['name'], ENT_QUOTES, 'UTF-8') . "'>";
 	echo '</div></div>';
 
-	echo '<div class="control-group"><label class="control-label" for="inputEmail">Comment:</label><div class="controls">';
+	echo '<div class="control-group"><label class="control-label" >Comment:</label><div class="controls">';
 	echo "<textarea name=comment id=commentinput >";
 	echo htmlspecialchars ($netdata['comment'], ENT_QUOTES, 'UTF-8') . "</textarea>";
 	echo '</div></div>';
@@ -2976,12 +2978,12 @@ function renderIPAddress ($ip_bin)
 	if (! empty ($address['vslist']) or ! empty ($address['rsplist']))
 		renderSLBTriplets ($address);
 
-	foreach (array ('outpf' => 'departing NAT rules', 'inpf' => 'arriving NAT rules') as $key => $title)
+	foreach (array ('outpf' => 'departing NAT rules', 'inpf' => 'Arriving NAT rules') as $key => $title)
 		if (! empty ($address[$key]))
 		{
-			startPortlet ($title);
-			echo "<table class='widetable' cellpadding=5 cellspacing=0 border=0 align='center' width='100%'>\n";
-			echo "<tr><th>proto</th><th>from</th><th>to</th><th>comment</th></tr>\n";
+			startPortlet ($title,12);
+			echo "<table class='table table-striped'>";
+			echo "<tr><th>Proto.</th><th>From</th><th>To</th><th>Comment</th></tr>";
 			foreach ($address[$key] as $rule)
 			{
 				echo "<tr>";
@@ -3005,11 +3007,11 @@ function renderIPAddressProperties ($ip_bin)
 
 	printOpFormIntro ('editAddress',array(),false,'form-flush');
 
-	echo '<div class="control-group"><label class="control-label" for="inputEmail">Name:</label><div class="controls">';
+	echo '<div class="control-group"><label class="control-label" >Name:</label><div class="controls">';
 	echo "<input type=text name=name id=id_name size=20 value='${address['name']}'>";
 	echo '</div></div>';
 
-	echo '<div class="control-group"><label class="control-label" for="inputEmail">Comment:</label><div class="controls">';
+	echo '<div class="control-group"><label class="control-label" >Comment:</label><div class="controls">';
 	echo "<input type=text name=comment id=id_comment size=20 value='${address['comment']}'>";
 	echo '</div></div>';
 
@@ -3066,7 +3068,7 @@ function renderIPAddressAllocations ($ip_bin)
 	{
 		$class = $address['class'];
 		if ($address['reserved'] == 'yes')
-			echo "<tr class='${class}'><td class=tdleft><strong>RESERVED</strong></td><td>&nbsp;</td></tr>";
+			echo "<tr class='${class}'><td colspan=4><strong>RESERVED</strong></td></tr>";
 		foreach ($address['allocs'] as $bond)
 		{
 			echo "<tr class='$class'>";
@@ -3912,7 +3914,7 @@ function renderEditLocationForm ($location_id)
 	startPortlet ('Attributes',12,'tpadded');
 	printOpFormIntro ('updateLocation',array(),false,'form-flush');
 
-	echo '<div class="control-group"><label class="control-label" for="inputEmail">Parent location:</label><div class="controls">';
+	echo '<div class="control-group"><label class="control-label" >Parent location:</label><div class="controls">';
 	$locations = array ();
 	$locations[0] = '-- NOT SET --';
 	foreach (listCells ('location') as $id => $locationInfo)
@@ -3921,7 +3923,7 @@ function renderEditLocationForm ($location_id)
 	printSelect ($locations, array ('name' => 'parent_id'), $location['parent_id']);
 	echo '</div></div>';
 
-	echo '<div class="control-group"><label class="control-label" for="inputEmail">Name (required):</label><div class="controls">';
+	echo '<div class="control-group"><label class="control-label" >Name (required):</label><div class="controls">';
 	echo "<input type=text name=name value='${location['name']}'>";
 	echo '</div></div>';
 
@@ -3935,7 +3937,7 @@ function renderEditLocationForm ($location_id)
 
 	echo "<input type=hidden name=${i}_attr_id value=${record['id']}>";
 
-		echo '<div class="control-group"><label class="control-label" for="inputEmail">' . $record['name'] . '</label><div class="controls"><div class="input-append">';
+		echo '<div class="control-group"><label class="control-label" >' . $record['name'] . '</label><div class="controls"><div class="input-append">';
 
 		switch ($record['type'])
 		{
@@ -3972,7 +3974,7 @@ function renderEditLocationForm ($location_id)
     echo '</label></div></div>';
 
 
-	echo '<div class="control-group"><label class="control-label" for="inputEmail">Comment:</label><div class="controls">';
+	echo '<div class="control-group"><label class="control-label" >Comment:</label><div class="controls">';
 	echo "<textarea name=comment rows=5 >${location['comment']}</textarea>";
 	echo '</div></div>';
 	echo '<div class="form-actions form-flush">';
@@ -4917,13 +4919,13 @@ function renderTagRowForEditor ($taginfo, $level = 0)
 		'input-flush'
 	);
 	echo '</td><td><div class="btn-group">' . getImageHREF ('i:pencil', 't:Save changes', TRUE);
-	
+
 	if ($taginfo['refcnt']['total'] > 0 or $taginfo['kidc'])
 		printImageHREF ('i:trash', 't:'.$taginfo['refcnt']['total'] . ' references, ' . $taginfo['kidc'] . ' sub-tags');
 	else
 		echo '<a class="btn" title="Delete tag" data-toggle="tooltip" href="' . makeHrefProcess (array ('op' => 'destroyTag', 'tag_id' => $taginfo['id']))
 			. '">' . getImage ('i:trash') . '</a>';
-	
+
 	echo '</div></form></td></tr>';
 	foreach ($taginfo['kids'] as $kid)
 		$self ($kid, $level + 1);
@@ -5398,7 +5400,7 @@ ENDJAVASCRIPT
 	echo "<input class='btn' type='submit' value='Save' disabled='disabled' id='SaveChanges' onclick='$(RCTA).toggleEditor();'>";
 //	printImageHREF ('SAVE', 'Save changes', TRUE);
 	echo "</div>";
-	
+
 	echo "</form>";
 	finishPortlet();
 }
@@ -5451,14 +5453,14 @@ function renderConfigEditor ()
 		}
 
 		echo "<input type=hidden name=${i}_varname value='${v['varname']}'>";
-		echo '<div class="control-group"><label style="width:450px;" class="control-label" for="inputEmail">';
+		echo '<div class="control-group"><label style="width:450px;" class="control-label" >';
 		renderConfigVarName ($v);
 		echo '</label><div style="margin-left:470px;" class="controls">';
 		echo "<div class='input-append'><input class='input-xlarge' type=text name=${i}_varvalue value='" .  htmlspecialchars ($v['varvalue'], ENT_QUOTES) . "'>{$editbutton}</div></div></div>";
 		$i++;
 	}
 	echo "<input type=hidden name=num_vars value=${i}><div class='form-actions form-flush'><span  style='margin-left:290px;'>";
-	
+
 	printImageHREF ('i:ok', 'Save', TRUE);
 
 	echo "</span></div></form>";
@@ -5483,8 +5485,8 @@ function renderMyAccount ()
 function renderMyQuickLinks ()
 {
 	global $indexlayout, $page;
-	startPortlet ('Items to display in page header');
-	printOpFormIntro ('save');
+	startPortlet ('Items to display in page header',12,'tpadded');
+	printOpFormIntro ('save',array(),false,'form-flush');
 	echo '<div class="control-group">';
 	$active_items = explode (',', getConfigVar ('QUICK_LINK_PAGES'));
 	foreach ($indexlayout as $row)
@@ -5631,11 +5633,11 @@ function renderFileManager ()
 		printOpFormIntro ('addFile', array (), TRUE);
 		echo '<div class="span7">';
 
-		echo '<div class="control-group"><label class="control-label" for="inputEmail">Comment:</label><div class="controls">';
+		echo '<div class="control-group"><label class="control-label" >Comment:</label><div class="controls">';
 		echo '<textarea style="width:100%;" tabindex=101 name=comment rows=10 cols=80></textarea>';
 		echo '</div></div>';
 
-		echo '<div class="control-group"><label class="control-label" for="inputEmail">File:</label><div class="controls">';
+		echo '<div class="control-group"><label class="control-label" >File:</label><div class="controls">';
 		echo "<input type='file' size='10' name='file' tabindex=100>";
 		echo '</div></div>';
 
@@ -5888,9 +5890,9 @@ function renderCell ($cell)
 		if (!isset ($cell['etags']))
 			$cell['etags'] = getExplicitTagsOnly (loadEntityTags ('user', $cell['user_id']));
 
-			if (count ($cell['etags'])) 
+			if (count ($cell['etags']))
 			echo "<span class='pull-right'><small>" . serializeTags ($cell['etags']) . "</small><span>";
-			
+
 		break;
 	case 'file':
 		$image = '';
@@ -5929,9 +5931,8 @@ function renderCell ($cell)
 		break;
 	case 'ipv4net':
 	case 'ipv6net':
-
 		echo mkA ("${cell['ip']}/${cell['mask']}", $cell['realm'], $cell['id']);
-		echo getRenderedIPNetCapacity ($cell);
+		echo '<div>' . getRenderedIPNetCapacity ($cell) . '</div>';
 
 		if (strlen ($cell['name']))
 			echo "<strong>" . niftyString ($cell['name']) . "</strong>";
@@ -5939,7 +5940,7 @@ function renderCell ($cell)
 			echo "<span class=sparenetwork>no name</span>";
 		// render VLAN
 		renderNetVLAN ($cell);
-		echo count ($cell['etags']) ? ("<small>" . serializeTags ($cell['etags']) . "</small>") : '';
+		echo count ($cell['etags']) ? ("<br/><small>" . serializeTags ($cell['etags']) . "</small>") : '';
 		break;
 	case 'rack':
 		echo "<table class='slbcell vscell'><tr><td rowspan=3 width='5%'>";
@@ -5978,17 +5979,14 @@ function renderCell ($cell)
 function renderRouterCell ($ip_bin, $ifname, $cell)
 {
 	$dottedquad = ip_format ($ip_bin);
-	echo "<table class=slbcell><tr><td rowspan=3>${dottedquad}";
+	echo "<div>${dottedquad}";
 	if (strlen ($ifname))
 		echo '@' . $ifname;
-	echo "</td>";
-	echo "<td><a href='index.php?page=object&object_id=${cell['id']}&hl_ip=${dottedquad}'><strong>${cell['dname']}</strong></a></td>";
-	echo "</td></tr><tr><td>";
-	printImageHREF ('router');
-	echo "</td></tr><tr><td>";
+	echo "</div>";
+	echo "<a href='index.php?page=object&object_id=${cell['id']}&hl_ip=${dottedquad}'><strong>${cell['dname']}</strong></a>";
 	if (count ($cell['etags']))
 		echo '<small>' . serializeTags ($cell['etags']) . '</small>';
-	echo "</td></tr></table>";
+
 }
 
 // Return HTML code necessary to show a preview of the file give. Return an empty string,
@@ -6125,10 +6123,10 @@ function showPathAndSearch ($pageno)
 
 	echo '<li>' . implode('<li><span class="divider">/</span></li>', array_reverse ($items)) . '</li>';
 
-	echo '<div style="float: right" class=greeting><i class="icon-user"></i>&nbsp;<a href="index.php?page=myaccount&tab=default">'. $remote_displayname  .'</a></div>';
-	
+	echo '<div style="float: right" class=greeting><a href="index.php?page=myaccount&tab=default"><i style="margin-top: 3px;" class="icon-user"></i>&nbsp;'. $remote_displayname  .'</a></div>';
+
 	//FIXME  <a class="btn btn-mini" title="Logout" data-toggle="tooltip" href="?logout"><i class="icon-off"></i></a>
-	
+
 	echo '</ul>';
 
 

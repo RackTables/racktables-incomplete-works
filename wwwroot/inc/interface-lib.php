@@ -302,7 +302,7 @@ function getSelect ($optionList, $select_attrs = array(), $selected_id = NULL, $
 	{
 		foreach ($optionList as $key => $value)
 			break;
-		return "<input type=hidden name=${select_attrs['name']} id=${select_attrs['name']} value=${key}>" . $value;
+		return "<input type=hidden name=${select_attrs['name']} id=${select_attrs['name']} value=${key}><input class='{$classes}' type=text value='{$value}' disabled>" ;
 	}
 	if (!array_key_exists ('id', $select_attrs))
 		$select_attrs['id'] = $select_attrs['name'];
@@ -835,11 +835,11 @@ function serializeTags ($chain, $baseurl = '')
 			if (isset ($taginfo['user']) and isset ($taginfo['time'])) {
 				$title = 'title="' . htmlspecialchars ($taginfo['user'] . ', ' . formatAge ($taginfo['time']), ENT_QUOTES) . '"';
 			}
-			$tmp[] = "<a data-toggle='tooltip' $title href='${baseurl}cft[]=${taginfo['id']}'><span class='badge'>" . $taginfo['tag'] . "</span></a>";
+			$tmp[] = "<a data-toggle='tooltip' $title href='${baseurl}cft[]=${taginfo['id']}'><span class='badge badge-info'>" . $taginfo['tag'] . "</span></a>";
 		}
 //		$tmp[] = "<$tag $href $title $class>" . $taginfo['tag'] . "</$tag>";
 	}
-	return implode ('', $tmp);
+	return '<span class="tags">' . implode ('', $tmp) . '</span>';
 }
 
 function startPortlet ($title = '',$width=8,$extraclass='',$recordCount=null)
