@@ -922,11 +922,11 @@ function renderEntitySummary ($cell, $title, $values = array(),$width=8)
 		}
 		elseif (! is_array ($value))
 			$name .= ':';
-		$class = 'tdright';
+		$class = '';
 		$m = array();
 		if (preg_match('/^\{(.*?)\}(.*)/', $name, $m))
 		{
-			$class .= ' ' . $m[1];
+			$class = $m[1];
 			$name = $m[2];
 		}
 		if ($name == 'tags:')
@@ -937,7 +937,7 @@ function renderEntitySummary ($cell, $title, $values = array(),$width=8)
 			printTagTRs ($cell, $baseurl);
 		}
 		else
-			echo "<dt>$name</dt><dd>$value</dd>";
+			echo "<dt class='{$class}'>{$name}</dt><dd>{$value}</dd>";
 	}
 	echo '</dl>';
 	finishPortlet();
