@@ -36,7 +36,7 @@ $(document).ready (function () {
 // submits form if this feature is enabled, and filter combination function is 'and'
 function cbClick (event, bInvert) {
 	event.stopImmediatePropagation();
-	var td = $(event.target).closest('td');
+	var td = $(event.target).closest('label');
 	var cb = td.find('.tag-cb');
 	if (cb.length != 1)
 		return;
@@ -63,7 +63,7 @@ function cbClick (event, bInvert) {
 	if (enableSubmitOnClick) {
 		var and_check = $('input[name=andor][value=and]')[0];
 		if (and_check.checked)
-			$(event.target).closest('form')[0].submit();
+			$(event.target).closest('form').submit();
 	}
 }
 

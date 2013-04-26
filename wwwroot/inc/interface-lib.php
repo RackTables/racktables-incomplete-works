@@ -451,13 +451,13 @@ function getImage ($tag, $title = '', $do_input = FALSE, $tabindex = 0)
 // this would be better called mkIMG(), make "IMG" HTML element
 function getImageHREF ($tag, $title = '', $do_input = FALSE, $tabindex = 0,$classes='')
 {
-	$buttonstatus = ($do_input == TRUE)?'':'disabled="disabled"';
+	$buttonstatus = ($do_input == TRUE)?'':'disabled';
 
 	if (strlen($title) > 2 && !strncmp($title, 't:', 2)) {
 		list($ident,$title) = explode(':',$title,2);
 
 		return
-		"<button data-toggle='tooltip' title='{$title}' class='btn {$classes}' type='submit' {$buttonstatus} name=submit " .
+		"<button data-toggle='tooltip' title='{$title}' class='btn {$classes} {$buttonstatus}' type='submit'  name=submit " .
 		($tabindex ? "tabindex=${tabindex}" : '') .
 		">" . getImage($tag). "</button>";
 
