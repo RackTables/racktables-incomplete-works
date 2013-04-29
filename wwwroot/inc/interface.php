@@ -101,15 +101,17 @@ function renderInterfaceHTML ($pageno, $tabno, $payload)
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Bootstrap -->
 
-    <link href="css/jquery-ui.min.css" rel="stylesheet" media="screen">
-    <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
-	<link href="css/main.css" rel="stylesheet" media="screen">
-	<script src="js/jquery-1.9.1.min.js"></script>
-	<script src="js/jquery-ui.min.js"></script>
-    <script src="js/bootstrap.min.js"></script>
-	<script src="js/bootstrap.custom.min.js"></script>
+<?php
+	addCSS('css/jquery-ui.min.css');
+	addCSS('css/bootstrap.min.css');
+	addCSS('css/main.css');
+	addJS('js/jquery-1.9.1.min.js');
+	addJS('js/jquery-ui.min.js');
+	addJS('js/bootstrap.min.js');
+	addJS('js/bootstrap.custom.min.js');
 
-	<?php printPageHeaders(); ?>
+	printPageHeaders();
+?>
   </head>
   <body>
   <div class="navbar navbar-inverse navbar-fixed-top">
