@@ -49,7 +49,7 @@ input.elastic, select.elastic {
     position: absolute;
     top: 7px;
     left: 11px;
-    background-image: url("?module=chrome&uri=css/img/glyphicons-halflings-white.png");
+    background-image: url("?module=chrome&uri=pix/glyphicons-halflings-white.png");
 }
 
 .navbar-search .search-query:focus, .navbar-search .search-query.focused {
@@ -57,7 +57,7 @@ input.elastic, select.elastic {
 }
 
 .search-query:focus + .icon-search {
-    background-image: url("?module=chrome&uri=css/img/glyphicons-halflings.png");
+    background-image: url("?module=chrome&uri=pix/glyphicons-halflings.png");
 }
 
 
