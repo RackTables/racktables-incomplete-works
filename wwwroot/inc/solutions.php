@@ -336,7 +336,7 @@ function renderImagePreview ($file_id)
 
 function printStatic404()
 {
-	header ('404 Not Found');
+	 header('HTTP/1.0 404 Not Found');
 ?><!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
 <html><head>
 <title>404 Not Found</title>
@@ -361,6 +361,10 @@ function proxyStaticURI ($URI)
 		'jpg' => 'image/jpeg',
 		'jpeg' => 'image/jpeg',
 		'ico' => 'image/x-icon',
+		'woff' => 'application/font-woff',
+		'ttf' => 'application/octet-stream',
+		'eot' => 'application/vnd.ms-fontobject',
+		'svg' => 'image/svg+xml'
 	);
 	$matches = array();
 	if

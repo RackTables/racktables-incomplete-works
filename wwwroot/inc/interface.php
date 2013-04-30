@@ -5932,6 +5932,8 @@ function printIPNetInfoTDs ($netinfo, $decor = array())
 
 function renderCell ($cell)
 {
+
+	echo '<div class="infocell">';
 	switch ($cell['realm'])
 	{
 	case 'user':
@@ -6027,6 +6029,7 @@ function renderCell ($cell)
 	default:
 		throw new InvalidArgException ('realm', $cell['realm']);
 	}
+	echo '</div>';
 }
 
 function renderRouterCell ($ip_bin, $ifname, $cell)
