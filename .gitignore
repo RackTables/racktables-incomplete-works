@@ -1,5 +1,7 @@
 wwwroot/inc/secret.php
 wwwroot/inc/local.php
 /.project
+/.settings
+/.buildpath
 tags
 plugins/*
