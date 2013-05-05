@@ -104,11 +104,12 @@ function renderInterfaceHTML ($pageno, $tabno, $payload)
 <?php
 	addCSS('css/jquery-ui.min.css');
 	addCSS('css/bootstrap.min.css');
+	addCSS('css/bootstrap-responsive.min.css');
 	addCSS('css/main.css');
-	addJS('js/jquery-1.9.1.min.js');
-	addJS('js/jquery-ui.min.js');
-	addJS('js/bootstrap.min.js');
-	addJS('js/bootstrap.custom.min.js');
+	addJS('js/jquery-1.9.1.min.js',false,'a-core');
+	addJS('js/jquery-ui.min.js',false,'a-core');
+	addJS('js/bootstrap.min.js',false,'a-core');
+	addJS('js/bootstrap.custom.min.js',false,'a-core');
 
 	printPageHeaders();
 ?>
@@ -1528,7 +1529,7 @@ function renderPortsForObject ($object_id)
 
 
 	startPortlet ('Ports and interfaces',12);
-	echo "<table class='table table-striped table-flush table-condensed'>\n";
+	echo "<table class='table table-striped table-edit table-flush table-condensed'>\n";
 	echo "<thead><tr><th class=tdleft>Local name</th><th class=tdleft>Visible label</th><th class=tdleft>Interface</th><th class=tdleft>L2 address</th>";
 	echo "<th class=tdcenter colspan=2>Remote object/port</th><th>Cable ID</th><th class=tdcenter>(Un)link or (un)reserve</th><th>&nbsp;</th></tr></thead>\n";
 	if (getConfigVar ('ADDNEW_AT_TOP') == 'yes')
@@ -1545,8 +1546,9 @@ function renderPortsForObject ($object_id)
 	foreach ($object['ports'] as $port)
 	{
 		$tr_class = isset ($hl_port_id) && $hl_port_id == $port['id'] ? 'class="highlight"' : '';
-		printOpFormIntro ('editPort', array ('port_id' => $port['id']),false,'form-flush');
 		echo "<tr $tr_class>\n";
+
+		printOpFormIntro ('editPort', array ('port_id' => $port['id']),false,'form-flush');
 		$a_class = isEthernetPort ($port) ? 'port-menu' : '';
 		echo "<td class='tdleft' NOWRAP><input type=text name=name class='input-small input-flush interactive-portname $a_class' value='${port['name']}' size=8></td>";
 		echo "<td><input class='input-small input-flush' type=text name=label value='${port['label']}'></td>";
@@ -1615,8 +1617,8 @@ function renderPortsForObject ($object_id)
 			echo "\",\"findlink\",\"${popup_args}\");'>" . getImage ('plug') . "</button><input class='input-small input-flush' type=text name=reservation_comment></div></td>\n";
 		}
 		echo '<td><div class="btn-group">';
-		printImageHREF ('i:ok', '', TRUE); //Save
-		echo "<a class='btn' name='port-${port['id']}' href='".makeHrefProcess(array('op'=>'delPort', 'port_id'=>$port['id']))."'>";
+		printImageHREF ('i:ok', 't:Save', TRUE); //Save
+		echo "<a class='btn' title='Delete port' data-toggle='tooltip' name='port-${port['id']}' href='".makeHrefProcess(array('op'=>'delPort', 'port_id'=>$port['id']))."'>";
 		printImage ('i:trash'); //Delete
 		echo "</a>";
 		echo "</div></td></form></tr>\n";
@@ -1675,19 +1677,19 @@ function renderIPForObject ($object_id)
 		global $aat;
 		printOpFormIntro ('add');
 		echo "<tr>";
-		echo "<td class=tdleft><input class='input-small' type='text' size='10' name='bond_name' tabindex=100></td>\n"; // if-name
-		echo "<td class=tdleft><input class='input-small' type=text name='ip' tabindex=101></td>\n"; // IP
+		echo "<td class=tdleft><input class='elastic' type='text' size='10' name='bond_name' tabindex=100></td>\n"; // if-name
+		echo "<td class=tdleft><input class='elastic' type=text name='ip' tabindex=101></td>\n"; // IP
 		if (getConfigVar ('EXT_IPV4_VIEW') == 'yes')
 			echo "<td colspan=2>&nbsp;</td>"; // network, routed by
 		echo '<td>';
 		printSelect ($aat, array ('name' => 'bond_type', 'tabindex' => 102), $default_type,'span2'); // type
 		echo "</td><td></td><td>"; // misc
-		printImageHREF ('i:plus', '', TRUE, 103); // right btn 'allocate'
+		printImageHREF ('i:plus', 't:Add', TRUE, 103); // right btn 'allocate'
 		echo "</td></tr></form>";
 	}
 	global $aat;
 	startPortlet ('Allocations',12);
-	echo "<table cellspacing=0 cellpadding='5' align='center' class='table table-striped'><thead><tr>\n";
+	echo "<table class='table table-striped'><thead><tr>\n";
 	echo '<th>OS interface</th>';
 	echo '<th>IP address</th>';
 	if (getConfigVar ('EXT_IPV4_VIEW') == 'yes')
@@ -1709,11 +1711,10 @@ function renderIPForObject ($object_id)
 		$used_alloc_types[$alloc['type']]++;
 
 		$rendered_alloc = callHook ('getRenderedAlloc', $object_id, $alloc);
-		$alloc_list .= getOutputOf ('printOpFormIntro', 'upd', array ('ip' => $alloc['addrinfo']['ip']));
 		$alloc_list .= "<tr class='${rendered_alloc['tr_class']}' valign=top>";
+		$alloc_list .= getOutputOf ('printOpFormIntro', 'upd', array ('ip' => $alloc['addrinfo']['ip']));
 
-
-		$alloc_list .= "<td class=tdleft><input class='input-small' type='text' name='bond_name' value='${alloc['osif']}' size=10>" . $rendered_alloc['td_name_suffix'] . "</td>";
+		$alloc_list .= "<td class=tdleft><input class='elastic' type='text' name='bond_name' value='${alloc['osif']}' size=10>" . $rendered_alloc['td_name_suffix'] . "</td>";
 		$alloc_list .= $rendered_alloc['td_ip'];
 		if (getConfigVar ('EXT_IPV4_VIEW') == 'yes')
 		{
@@ -1722,7 +1723,7 @@ function renderIPForObject ($object_id)
 		}
 		$alloc_list .= '<td>' . getSelect ($aat, array ('name' => 'bond_type'), $alloc['type'],true,'span2') . "</td>";
 		$alloc_list .= $rendered_alloc['td_peers'];
-		$alloc_list .= "<td><div class='btn-group'>" .getImageHREF ('i:ok', '', TRUE) . "<a class='btn' href='" .
+		$alloc_list .= "<td><div class='btn-group'>" .getImageHREF ('i:ok', 't:Save', TRUE) . "<a title='Delete this IP address' data-toggle='tooltip' class='btn' href='" .
 			makeHrefProcess
 			(
 				array
@@ -1731,7 +1732,7 @@ function renderIPForObject ($object_id)
 					'ip' => $alloc['addrinfo']['ip'],
 				)
 			) . "'>" .
-			getImage ('i:trash', 'Delete this IP address') .
+			getImage ('i:trash') .
 			"</a></div></td>";
 
 		$alloc_list .= "</form></tr>\n";
@@ -2480,7 +2481,7 @@ $(document).ready(function () {
 	Validate.init();
 });
 END
-	, TRUE);
+	,true);
 
 	startPortlet ('Add new',12,'tpadded');
 	////echo '<table border=0 cellpadding=10 align=center>';
@@ -2553,7 +2554,7 @@ function getRenderedIPNetBacktrace ($range)
 			'hl_net' => 1,
 			'eid' => $range['id'],
 		)) . '" title="View IP tree with this net as root">' . $arrow . '</a>';
-		$ret[] = array ($link, '<div style="padding: 24px;margin:0;" >' . getOutputOf ('renderCell', $ainfo) . '</div>');
+		$ret[] = array ($link, '<div style="padding-bottom: 5px;margin:0;" >' . getOutputOf ('renderCell', $ainfo) . '</div>');
 	}
 	return $ret;
 }
@@ -3134,10 +3135,9 @@ function renderNATv4ForObject ($object_id)
 	function printNewItemTR ($alloclist)
 	{
 		printOpFormIntro ('addNATv4Rule');
-		echo "<tr align='center'><td>";
-		echo '</td><td>';
-		printSelect (array ('TCP' => 'TCP', 'UDP' => 'UDP'), array ('name' => 'proto'),null,'span1');
-		echo "<select  class='input-small' name='localip' tabindex=1>";
+		echo "<tr align='center'><td style='white-space: nowrap;'>";
+		printSelect (array ('TCP' => 'TCP', 'UDP' => 'UDP'), array ('name' => 'proto'),null,'span1 input-flush');
+		echo "<select  class='span2 input-flush' name='localip' tabindex=1>";
 
 		foreach ($alloclist as $ip_bin => $alloc)
 		{
@@ -3147,23 +3147,23 @@ function renderNATv4ForObject ($object_id)
 			echo "<option value='${ip}'>${osif}${ip}${name}</option>";
 		}
 
-		echo "</select>:<input  class='input-small' type='text' name='localport' size='4' tabindex=2></td>";
-		echo "<td><input type='text' name='remoteip' id='remoteip' size='10' tabindex=3>";
-		echo "<a href='javascript:;' onclick='window.open(\"" . makeHrefForHelper ('inet4list');
+		echo "</select>:<input  class='input-mini input-flush' type='text' name='localport' size='4' tabindex=2></td>";
+		echo "<td  style='white-space: nowrap;'><div class='input-prepend input-flush'>";
+		echo "<a class='btn' title='Find object' data-toggle='tooltip' href='javascript:;' onclick='window.open(\"" . makeHrefForHelper ('inet4list');
 		echo "\", \"findobjectip\", \"height=700, width=400, location=no, menubar=no, resizable=yes, scrollbars=no, status=no, titlebar=no, toolbar=no\");'>";
-		printImageHREF ('find', 'Find object');
-		echo "</a>";
-		echo ":<input type='text' name='remoteport' size='4' tabindex=4></td><td></td>";
-		echo "<td colspan=1><input type='text' name='description' size='20' tabindex=5></td><td>";
-		printImageHREF ('i:ok', 't:Save', TRUE, 6); //'Add new NAT rule'
+		printImage ('i:search');
+		echo "</a><input class='input-small input-flush' type='text' name='remoteip' id='remoteip' size='10' tabindex=3>";
+		echo "</div>:<input type='text' class='input-mini input-flush' name='remoteport' size='4' tabindex=4></td><td></td>";
+		echo "<td colspan=1><input class='input-flush elastic' type='text' name='description' size='20' tabindex=5></td><td>";
+		printImageHREF ('i:plus', 't:Add', TRUE, 6); //'Add new NAT rule'
 		echo "</td></tr></form>";
 	}
 
 	$focus = spotEntity ('object', $object_id);
 	amplifyCell ($focus);
 	startPortlet('Locally performed NAT',12);
-	echo "<table class='widetable' cellpadding=5 cellspacing=0 border=0 align='center'>\n";
-	echo "<tr><th></th><th>Match endpoint</th><th>Translate to</th><th>Target object</th><th>Comment</th><th>&nbsp;</th></tr>\n";
+	echo "<table class='table table-striped table-edit'>\n";
+	echo "<thead><tr><th>Match endpoint</th><th>Translate to</th><th>Target object</th><th>Comment</th><th style='width:1px;'></th></tr></thead>";
 
 	if (getConfigVar ('ADDNEW_AT_TOP') == 'yes')
 		printNewItemTR ($focus['ipv4']);
@@ -3179,18 +3179,6 @@ function renderNATv4ForObject ($object_id)
 		}
 
 		echo "<tr class='$class'>";
-		echo "<td><a href='".
-			makeHrefProcess(array(
-				'op'=>'delNATv4Rule',
-				'localip'=>$pf['localip'],
-				'localport'=>$pf['localport'],
-				'remoteip'=>$pf['remoteip'],
-				'remoteport'=>$pf['remoteport'],
-				'proto'=>$pf['proto'],
-			)).
-		"'>";
-		printImageHREF ('delete', 'Delete NAT rule');
-		echo "</a></td>";
 		echo "<td>${pf['proto']}/${osif}" . getRenderedIPPortPair ($pf['localip'], $pf['localport']);
 		if (strlen ($pf['local_addr_name']))
 			echo ' (' . $pf['local_addr_name'] . ')';
@@ -3215,12 +3203,25 @@ function renderNATv4ForObject ($object_id)
 				'remoteip' => $pf['remoteip'],
 				'remoteport' => $pf['remoteport'],
 				'proto' => $pf['proto']
-			)
+			),
+			false,
+			'form-flush'
 		);
 		echo "</td><td class='description'>";
-		echo "<input type='text' name='description' value='${pf['description']}'></td><td>";
-		printImageHREF ('save', 'Save changes', TRUE);
-		echo "</td></form></tr>";
+		echo "<input class='input-flush elastic' type='text' name='description' value='${pf['description']}'></td><td><div class='btn-group'>";
+		printImageHREF ('i:ok', 't:Save', TRUE);
+		echo "<a class='btn' title='Delete NAT rule' data-toggle='tooltip' href='".
+			makeHrefProcess(array(
+				'op'=>'delNATv4Rule',
+				'localip'=>$pf['localip'],
+				'localport'=>$pf['localport'],
+				'remoteip'=>$pf['remoteip'],
+				'remoteport'=>$pf['remoteport'],
+				'proto'=>$pf['proto'],
+			)).
+		"'>";
+		printImage ('i:trash');
+		echo "</a></div></td></form></tr>";
 	}
 	if (getConfigVar ('ADDNEW_AT_TOP') != 'yes')
 		printNewItemTR ($focus['ipv4']);
@@ -3231,8 +3232,8 @@ function renderNATv4ForObject ($object_id)
 		return;
 
 	startPortlet('Arriving NAT connections',12);
-	echo "<table class='table table-striped' cellpadding=5 cellspacing=0 border=0 align='center'>\n";
-	echo "<thead><tr><th>Source</th><th>Source objects</th><th>Target</th><th>Description</th><th></th></tr></thead>\n";
+	echo "<table class='table table-edit table-striped'>";
+	echo "<thead><tr><th>Source</th><th>Source objects</th><th>Target</th><th>Description</th><th style='width:1px;'></th></tr></thead>\n";
 
 	foreach ($focus['nat4']['in'] as $pf)
 	{
@@ -5561,11 +5562,11 @@ function renderFileSummary ($file)
 {
 	$summary = array();
 	$summary['Type'] = $file['type'];
-	$summary['Size'] = formatFileSize ($file['size']); 
+	$summary['Size'] = formatFileSize ($file['size']);
 	$summary['Created'] = $file['ctime'];
 	$summary['Modified'] = $file['mtime'];
 	$summary['Accessed'] = $file['atime'];
-	
+
 
 	$summary['tags'] = '';
 	if (strlen ($file['comment']))
@@ -5575,7 +5576,7 @@ function renderFileSummary ($file)
 		$summary['Download'] =		"<a href='?module=download&file_id=${file['id']}'>" .
 		getImage ('i:download') . ' Download file</a>&nbsp;';
 	}
-	
+
 	renderEntitySummary ($file, 'Summary', $summary);
 }
 
@@ -5641,14 +5642,14 @@ function renderFileReuploader ()
 {
 	startPortlet ('Replace existing contents',12,'tpadded');
 	printOpFormIntro ('replaceFile', array (), TRUE,'form-flush');
-	
+
 	echo '<div class="control-group"><label class="control-label" >New File:</label><div class="controls">';
 	echo '<input type=file size=10 name=file tabindex=100>';
 	echo '</div></div>';
 	echo '<div class="form-actions form-flush">';
 	printImageHREF ('i:ok', 'Save changes', TRUE, 101);
 	echo "</div></form>";
-	
+
 	finishPortlet();
 }
 
@@ -5670,7 +5671,7 @@ function renderFileProperties ($file_id)
 		echo '<div class="control-group"><label class="control-label" >MIME-type:</label><div class="controls">';
 		echo '<input tabindex=101 type=text name=file_type value="'. htmlspecialchars ($file['type']) . '">';
 		echo '</div></div>';
-		
+
 		echo '<div class="control-group"><label class="control-label" >Filename:</label><div class="controls">';
 		echo '<input tabindex=102 type=text name=file_name value="'. htmlspecialchars ($file['name']) . '">';
 		echo '</div></div>';
@@ -5679,20 +5680,20 @@ function renderFileProperties ($file_id)
 		echo '<div class="control-group"><label class="control-label" >Comment:</label><div class="controls">';
 		echo '<textarea tabindex=103 name=file_comment rows=5>' .htmlspecialchars ($file['comment']) . '</textarea>';
 		echo '</div></div>';
-		
+
 		echo '<div class="form-actions form-flush">';
 
 		printImageHREF ('i:ok', 'Save', TRUE, 104);
-		
+
 	echo "<a class='btn' href='".
 		makeHrefProcess (array ('op'=>'deleteFile', 'page'=>'files', 'tab'=>'manage', 'file_id'=>$file_id)).
 		"' onclick=\"javascript:return confirm('Are you sure you want to delete the file?')\">" .
 		getImage ('i:trash') . " Delete file</a>";
 
 
-	
+
 	echo '</div></form>';
-	
+
 	finishPortlet();
 }
 
@@ -5910,14 +5911,19 @@ function printIPNetInfoTDs ($netinfo, $decor = array())
 	if (array_key_exists ('tdclass', $decor))
 		echo ' ' . $decor['tdclass'];
 	echo '" style="padding-left: ' . ($decor['indent'] * 16) . 'px;">';
+
 	if (strlen ($netinfo['symbol']))
 	{
+		echo '<div class="pull-left" style="padding-right:5px;">';
 		if (array_key_exists ('symbolurl', $decor))
 			echo "<a href='${decor['symbolurl']}'>";
-		printImageHREF ($netinfo['symbol']);
-		if (array_key_exists ('symbolurl', $decor))
-			echo '</a>';
+			printImage ($netinfo['symbol']);
+			if (array_key_exists ('symbolurl', $decor))
+				echo '</a>';
+						echo '</div>';
 	}
+
+	echo '<div class="pull-left">';
 	if (isset ($netinfo['id']))
 		echo "<a name='net-${netinfo['id']}' href='index.php?page=ipv${ip_ver}net&id=${netinfo['id']}'>";
 	echo $formatted;
@@ -5928,24 +5934,28 @@ function printIPNetInfoTDs ($netinfo, $decor = array())
 		echo '<br>';
 		renderNetVLAN ($netinfo);
 	}
+	echo '</div>';
+
+
+
 	echo '</td><td class="tdleft';
 	if (array_key_exists ('tdclass', $decor))
 		echo ' ' . $decor['tdclass'];
 	echo '">';
 	if (!isset ($netinfo['id']))
 	{
-		printImageHREF ('dragons', 'Here be dragons.');
 		if ($decor['knight'])
 		{
-			echo '<a href="' . makeHref (array
+			echo '<a class="btn pull-right" data-toggle="tooltip" title="Create network here, cowboy!" href="' . makeHref (array
 			(
 				'page' => "ipv${ip_ver}space",
 				'tab' => 'newrange',
 				'set-prefix' => $formatted,
 			)) . '">';
-			printImageHREF ('knight', 'create network here');
+			printImage ('i:plus'); printImage ('knight');
 			echo '</a>';
 		}
+		echo '<p class="text-warning">Here be dragons.</p>';
 	}
 	else
 	{
@@ -6001,7 +6011,7 @@ function renderCell ($cell,$withborder=true)
 			echo '</a>&nbsp;';
 		}
 		echo formatFileSize ($cell['size']) . '</span>';
-		
+
 		echo '<i class="icon-file"></i>&nbsp;';
 		echo  mkA ('<strong>' . niftyString ($cell['name']) . '</strong>', 'file', $cell['id']);
 		if (isset ($cell['links']) and count ($cell['links']))
@@ -7341,18 +7351,15 @@ function renderVLANInfo ($vlan_ck)
 {
 	global $vtoptions, $nextorder;
 	$vlan = getVLANInfo ($vlan_ck);
-	echo '<table border=0 class=objectview cellspacing=0 cellpadding=0>';
-	echo '<tr><td colspan=2 align=center><h4>' . formatVLANAsRichText ($vlan) . '</h4></td></tr>';
-	echo "<tr><td class=pcleft width='50%'>";
-	startPortlet ('Summary');
-	echo "<table border=0 cellspacing=0 cellpadding=3 width='100%'>";
-	echo "<tr><th width='50%' class=tdright>Domain:</th><td class=tdleft>";
-	echo niftyString ($vlan['domain_descr'], 0) . '</td></tr>';
-	echo "<tr><th width='50%' class=tdright>VLAN ID:</th><td class=tdleft>${vlan['vlan_id']}</td></tr>";
+	echo '<div class="span8"><div class="row">';
+	startPortlet (formatVLANAsRichText ($vlan) . ' - Summary',8);
+	echo '<dl class="dl-horizontal">';
+	echo "<dt>Domain:</dt><dd>".  niftyString ($vlan['domain_descr'], 0) . '</dd>';
+	echo "<dt>VLAN ID:</dt><dd>${vlan['vlan_id']}</dd>";
 	if (strlen ($vlan['vlan_descr']))
-		echo "<tr><th width='50%' class=tdright>Description:</th><td class=tdleft>" .
-			niftyString ($vlan['vlan_descr'], 0) . "</td></tr>";
-	echo "<tr><th width='50%' class=tdright>Propagation:</th><td class=tdleft>" . $vtoptions[$vlan['vlan_prop']] . "</td></tr>";
+		echo "<dt>Description:</dt><dd>" . niftyString ($vlan['vlan_descr'], 0) . "</dd>";
+
+	echo "<dt>Propagation:</dt><dd>" . $vtoptions[$vlan['vlan_prop']] . "</dd>";
 	$others = getSearchResultByField
 	(
 		'VLANDescription',
@@ -7364,30 +7371,31 @@ function renderVLANInfo ($vlan_ck)
 	);
 	foreach ($others as $other)
 		if ($other['domain_id'] != $vlan['domain_id'])
-			echo '<tr><th class=tdright>Counterpart:</th><td class=tdleft>' .
+			echo '<dt>Counterpart:</dt><dd>' .
 				formatVLANAsHyperlink (getVLANInfo ("${other['domain_id']}-${vlan['vlan_id']}")) .
-				'</td></tr>';
-	echo '</table>';
+				'</dd>';
 	finishPortlet();
+
+
 	if (0 == count ($vlan['ipv4nets']) + count ($vlan['ipv6nets']))
-		startPortlet ('no networks');
+		startPortlet ('No networks');
 	else
 	{
-		startPortlet ('networks (' . (count ($vlan['ipv4nets']) + count ($vlan['ipv6nets'])) . ')');
+		startPortlet ('Networks',8,'',count ($vlan['ipv4nets']) + count ($vlan['ipv6nets']));
 		$order = 'odd';
-		echo '<table cellspacing=0 cellpadding=5 align=center class=widetable>';
-		echo '<tr><th>';
-		printImageHREF ('net');
+		echo '<table class="table table-striped">';
+		echo '<thead><tr><th>';
+		printImage ('net');
 		echo '</th><th>';
-		printImageHREF ('text');
-		echo '</th></tr>';
+		printImage ('text');
+		echo '</th></tr></thead>';
 		foreach (array ('ipv4net', 'ipv6net') as $nettype)
 		foreach ($vlan[$nettype . 's'] as $netid)
 		{
 			$net = spotEntity ($nettype, $netid);
 			#echo "<tr class=row_${order}><td>";
 			echo '<tr><td>';
-			renderCell ($net);
+			renderCell ($net,false);
 			echo '</td><td>' . (mb_strlen ($net['comment']) ? niftyString ($net['comment']) : '&nbsp;');
 			echo '</td></tr>';
 			$order = $nextorder[$order];
@@ -7429,22 +7437,23 @@ function renderVLANInfo ($vlan_ck)
 		finishPortlet();
 	}
 
-	echo '</td><td class=pcright>';
+	echo '</div></div>';
+
 	if (!count ($confports))
-		startPortlet ('no ports');
+		startPortlet ('no ports',4);
 	else
 	{
-		startPortlet ('Switch ports (' . count ($confports) . ')');
+		startPortlet ('Switch ports',4,'',count ($confports));
 		global $nextorder;
 		$order = 'odd';
-		echo '<table border=0 cellpadding=5 cellspacing=0 align=center class=cooltable>';
-		echo '<tr><th>switch</th><th>ports</th></tr>';
+		echo '<table class="table table-striped">';
+		echo '<thead><tr><th>Switch</th><th>Ports</th></tr></thead>';
 		foreach ($confports as $switch_id => $portlist)
 		{
 			usort_portlist ($portlist);
 			echo "<tr class=row_${order} valign=top><td>";
 			$object = spotEntity ('object', $switch_id);
-			renderCell ($object);
+			renderCell ($object,false);
 			echo '</td><td class=tdleft><ul>';
 			foreach ($portlist as $port_name)
 			{
@@ -7461,7 +7470,8 @@ function renderVLANInfo ($vlan_ck)
 		echo '</table>';
 	}
 	finishPortlet();
-	echo '</td></tr></table>';
+
+
 }
 
 function renderVLANIPLinks ($some_id)
@@ -7470,13 +7480,14 @@ function renderVLANIPLinks ($some_id)
 	{
 		if (!count ($options))
 			return;
-		printOpFormIntro ('bind', $extra);
+		printOpFormIntro ('bind', $extra,false,'form-flush');
 		echo '<tr><td>' . getOptionTree ($sname, $options, array ('tabindex' => 101));
-		echo '</td><td>' . getImageHREF ('ATTACH', 'bind', TRUE, 102) . '</td></tr></form>';
+		echo '</td><td>' . getImageHREF ('i:resize-small', 't:Bind', TRUE, 102) . '</td></tr></form>';
 	}
 	global $pageno, $tabno;
-	echo '<table cellspacing=0 cellpadding=5 align=center class=widetable>';
-	echo '<tr>';
+	startPortlet('VLAN IP Links',12);
+	echo '<table class="table table-striped">';
+	echo '<thead><tr>';
 
 	// fill $minuslines, $plusoptions, $select_name
 	$minuslines = array();
@@ -7486,7 +7497,7 @@ function renderVLANIPLinks ($some_id)
 	{
 	case 'vlan':
 		$ip_ver = $tabno == 'ipv6' ? 'ipv6' : 'ipv4';
-		echo '<th>' . getImageHREF ('net') . '</th>';
+		echo '<th>' . getImage ('net') . '</th>';
 		$vlan = getVLANInfo ($some_id);
 		$domainclass = array ($vlan['domain_id'] => 'trbusy');
 		foreach ($vlan[$ip_ver . "nets"] as $net_id)
@@ -7540,7 +7551,7 @@ function renderVLANIPLinks ($some_id)
 		$extra = array ('id' => $netinfo['id']);
 		break;
 	}
-	echo '<th>&nbsp;</th></tr>';
+	echo '<th style="width:1px;"></th></tr></thead>';
 	if (getConfigVar ('ADDNEW_AT_TOP') == 'yes')
 		printNewItemTR ($select_name, $plusoptions, $extra);
 	foreach ($minuslines as $item)
@@ -7549,7 +7560,7 @@ function renderVLANIPLinks ($some_id)
 		switch ($pageno)
 		{
 		case 'vlan':
-			renderCell (spotEntity ($ip_ver . 'net', $item['net_id']));
+			renderCell (spotEntity ($ip_ver . 'net', $item['net_id']),false);
 			break;
 		case 'ipv4net':
 		case 'ipv6net':
@@ -7557,7 +7568,7 @@ function renderVLANIPLinks ($some_id)
 			echo formatVLANAsRichText ($vlaninfo);
 			break;
 		}
-		echo '</td><td><a href="';
+		echo '</td><td><a title="Unbind" data-toggle="tooltip" class="btn" href="';
 		echo makeHrefProcess
 		(
 			array
@@ -7568,11 +7579,12 @@ function renderVLANIPLinks ($some_id)
 				'vlan_ck' => $item['domain_id'] . '-' . $item['vlan_id']
 			)
 		);
-		echo '">' . getImageHREF ('Cut', 'unbind') . '</a></td></tr>';
+		echo '">' . getImage ('i:resize-full') . '</a></td></tr>';
 	}
 	if (getConfigVar ('ADDNEW_AT_TOP') != 'yes')
 		printNewItemTR ($select_name, $plusoptions, $extra);
 	echo '</table>';
+	finishPortlet();
 }
 
 function renderObject8021QSync ($object_id)
@@ -8132,8 +8144,8 @@ function renderDiscoveredNeighbors ($object_id)
 
 	switchportInfoJS($object_id); // load JS code to make portnames interactive
 	printOpFormIntro ('importDPData');
-	
-	startPortlet($title_by_tabno[$tabno],12);	
+
+	startPortlet($title_by_tabno[$tabno],12);
 	echo '<table class="table table-striped">';
 	echo '<thead><tr><th colspan=2>Local port</th><th></th><th>Remote device</th><th colspan=2>Remote port</th><th><input type="checkbox" checked id="cb-toggle"></th></tr></thead>';
 	$inputno = 0;
@@ -8431,11 +8443,11 @@ function renderObjectLogEditor ()
 {
 	global $nextorder;
 	startPortlet('Log records for this object (<a href=?page=objectlog>complete list</a>)',12);
-	printOpFormIntro ('add');
+	printOpFormIntro ('add',array(),false,'form-flush');
 	echo "<table class='table table-striped'>";
 	echo "<thead><tr><th style='width:140px;'>Date</th><th>Log</th><th style='width:32px;'>Tasks</th></tr></thead><tr valign=top class=row_odd>";
 	echo '<td class=tdcenter></td>';
-	echo '<td><textarea style="width:100%" name=logentry rows=5 tabindex=100></textarea></td>';
+	echo '<td><textarea class="input-flush" style="width:100%" name=logentry rows=5 tabindex=100></textarea></td>';
 	echo '<td class=tdcenter>' . getImageHREF ('i:plus', 't:Add', TRUE, 101) . '</td>' ;
 	echo '</tr></form>';
 
@@ -8794,22 +8806,24 @@ function renderEditVlan ($vlan_ck)
 {
 	global $vtoptions;
 	$vlan = getVLANInfo ($vlan_ck);
-	startPortlet ('Modify');
-	printOpFormIntro ('upd');
+	startPortlet ('Modify',12,'tpadded');
+	printOpFormIntro ('upd',array(),false,'form-flush');
 	// static attributes
-	echo '<table border=0 cellspacing=0 cellpadding=2 align=center>';
-	echo '<tr><th class=tdright>Name:</th><td class=tdleft>' .
-		"<input type=text size=40 name=vlan_descr value='${vlan['vlan_descr']}'>" .
-		'</td></tr>';
-	echo '<tr><th class=tdright>Type:</th><td class=tdleft>' .
-		getSelect ($vtoptions, array ('name' => 'vlan_type', 'tabindex' => 102), $vlan['vlan_prop']) .
-		'</td></tr>';
-	echo '</table>';
-	echo '<p>';
+
+	echo '<div class="control-group"><label class="control-label" >Name:</label><div class="controls">';
+	echo "<input type=text size=40 name=vlan_descr value='${vlan['vlan_descr']}'>";
+	echo '</div></div>';
+
+	echo '<div class="control-group"><label class="control-label" >Type:</label><div class="controls">';
+	echo getSelect ($vtoptions, array ('name' => 'vlan_type', 'tabindex' => 102), $vlan['vlan_prop']) ;
+	echo '</div></div>';
+
 	echo '<input type="hidden" name="vdom_id" value="' . htmlspecialchars ($vlan['domain_id'], ENT_QUOTES) . '">';
 	echo '<input type="hidden" name="vlan_id" value="' . htmlspecialchars ($vlan['vlan_id'], ENT_QUOTES) . '">';
-	printImageHREF ('SAVE', 'Update VLAN', TRUE);
-	echo '</form><p>';
+
+	echo '<div class="form-actions form-flush">';
+	printImageHREF ('i:ok', 'Update', TRUE);
+
 	// get configured ports count
 	$portc = 0;
 	foreach (getVLANConfiguredPorts ($vlan_ck) as $subarray)
@@ -8819,10 +8833,8 @@ function renderEditVlan ($vlan_ck)
 	$delete_line = '';
 	if ($portc)
 	{
-		$clear_line .= '<p>';
-		$clear_line .= '<a href="' . makeHrefProcess (array ('op' => 'clear')) . '">';
-		$clear_line .= getImageHREF ('clear', "remove this vlan from $portc ports") . ' remove</a>' .
-			' this VLAN from ' . mkA ("${portc} ports", 'vlan', $vlan_ck);
+		$clear_line .= '<a class="btn" title="Remove this vlan from '.$portc .' ports." data-toggle="tooltip" href="' . makeHrefProcess (array ('op' => 'clear')) . '">';
+		$clear_line .= getImage ('i:trash') . ' Remove</a>';
 	}
 
 	$reason = '';
@@ -8831,10 +8843,14 @@ function renderEditVlan ($vlan_ck)
 	elseif ($portc)
 		$reason = "Can not delete: $portc ports configured";
 	if (! empty ($reason))
-		echo getOpLink (NULL, 'delete VLAN', 'nodestroy', $reason);
+		printImageHREF ('i:trash', $reason);
 	else
-		echo getOpLink (array ('op' => 'del', 'vlan_ck' => $vlan_ck), 'delete VLAN', 'destroy');
+		echo getOpLink (array ('op' => 'del', 'vlan_ck' => $vlan_ck), 'Delete VLAN', 'i:trash');
 	echo $clear_line;
+
+	echo '</div>';
+	echo '</form>';
+
 	finishPortlet();
 }
 

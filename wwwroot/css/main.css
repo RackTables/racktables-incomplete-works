@@ -14,7 +14,7 @@ html, body { padding: 0; margin: 0;}
 }
 
 
-body { font: 14px 'Open Sans', Arial, sans-serif; padding: 60px; }
+body { font: 14px 'Open Sans', Arial, sans-serif; padding-top: 60px; }
 
 textarea {
 box-sizing: border-box;
@@ -47,7 +47,6 @@ input.elastic, select.elastic {
 	-webkit-box-shadow: 0 2px 2px -2px #CCC;
 	-moz-box-shadow: 0 2px 2px -2px #ccc;
 	box-shadow: 0 2px 2px -2px #CCC;
-	background: #FBFBFB;
 	border: 1px solid #CDCDCD;
 	-webkit-border-radius: 3px;
 	-moz-border-radius: 3px;
@@ -197,6 +196,22 @@ td form {
 	border-width:0;
 }
 
+.validation-error {
+	border: 1px solid #b94a48 !important;
+	color: #b94a48 !important;
+	-webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075) !important;
+	-moz-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075) !important;
+	box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075) !important;
+}
+
+.validation-success {
+	border: 1px solid #468847 !important;
+	color: #468847 !important;
+	-webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075) !important;
+	-moz-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075) !important;
+	box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075) !important;
+}
+
 .btn-spacer {
 	margin-bottom:10px;
 }
@@ -235,36 +250,44 @@ td form {
 	font-weight:400;
 }
 
-.table th, .table td {
+.table-edit th, .table-edit td {
 	vertical-align: baseline;
 }
 
+.table-striped tbody>tr:nth-child(odd)>td, .table-striped tbody>tr:nth-child(odd)>th {
+	background-color: #f7f7f7;
+}
+
+tr.highlight td {
+	background-color: #dff0d8 !important;
+}
 
 tr.trbusy  td{
-	background-color: #d9edf7;
+	background-color: #d9edf7 !important;
 }
 tr.trok   td{
-	background-color: #dff0d8;
+	background-color: #dff0d8 !important;
 }
 tr.trwarning  td {
-	background-color: #fcf8e3;
+	background-color: #fcf8e3 !important;
 }
 tr.trerror  td {
-	background-color: #f2dede;
+	background-color: #f2dede !important;
 }
 
 .rt-busy {
-	background-color: #d9edf7;
+	background-color: #d9edf7 !important;
 }
 .rt-ok {
-	background-color: #dff0d8;
+	background-color: #dff0d8 !important;
 }
 .rt-warning {
-	background-color: #fcf8e3;
+	background-color: #fcf8e3 !important;
 }
 .rt-error {
-	background-color: #f2dede;
+	background-color: #f2dede !important;
 }
+
 
 
 .row:before,.row:after,.row-fluid:before,.row-fluid:after,.container:before,.container:after,.container-fluid:before,.container-fluid:after,.dl-horizontal:before,.dl-horizontal:after,.controls-row:before,.controls-row:after,.form-actions:before,.form-actions:after,.form-horizontal .control-group:before,.form-horizontal .control-group:after,.nav-tabs:before,.nav-tabs:after,.nav-pills:before,.nav-pills:after,.tabbable:before,.tabbable:after,.navbar-inner:before,.navbar-inner:after,.navbar-form:before,.navbar-form:after,.pager:before,.pager:after,.modal-footer:before,.modal-footer:after,.thumbnails:before,.thumbnails:after,.clearfix:before,.clearfix:after,.box .box-header:before,.box .box-header:after,.box .box-footer:before,.box .box-footer:after,.box-list > li:before,.box-list > li:after,.closable-chat-box .fields:before,.closable-chat-box .fields:after,.num-stats:before,.num-stats:after,.sparkline-box .sparkline-row:before,.sparkline-box .sparkline-row:after,.chat-box.timeline .content:before,.chat-box.timeline .content:after,.chat-box .info:before,.chat-box .info:after {
@@ -574,6 +597,14 @@ background-color:#fbb450;
 background-image:linear-gradient(45deg,rgba(255,255,255,0.15) 25% 25% 50% 50% 75% 75%;
 }
 
-
+/* Make sure we print without links in brackets */
+@media print {
+  a[href]:after {
+    content: none !important;
+  }
+  a[href]:before {
+    content: none !important;
+  }
+}
 
 
