@@ -3691,7 +3691,7 @@ function renderCellList ($realm = NULL, $title = 'items', $do_amplify = FALSE, $
 		foreach ($celllist as $cell)
 		{
 			echo "<tr class=row_${order}><td>";
-			renderCell ($cell);
+			renderCell ($cell,false);
 			echo "</td></tr>\n";
 			$order = $nextorder[$order];
 		}
@@ -3833,8 +3833,9 @@ function renderObjectParentCompatViewer()
 	global $nextorder;
 	$order = 'odd';
 	$last_left_parent_id = NULL;
-	echo '<br><table class=cooltable border=0 cellpadding=5 cellspacing=0 align=center>';
-	echo '<tr><th>Parent</th><th>Child</th></tr>';
+	startPortlet('Object container compatibility',12);
+	echo '<table class="table table-striped">';
+	echo '<thead><tr><th>Parent</th><th>Child</th></tr></thead>';
 	foreach (getObjectParentCompat() as $pair)
 	{
 		if ($last_left_parent_id != $pair['parent_objtype_id'])
@@ -3845,6 +3846,7 @@ function renderObjectParentCompatViewer()
 		echo "<tr class=row_${order}><td>${pair['parent_name']}</td><td>${pair['child_name']}</td></tr>\n";
 	}
 	echo '</table>';
+	finishPortlet();
 }
 
 function renderObjectParentCompatEditor()
@@ -3852,23 +3854,24 @@ function renderObjectParentCompatEditor()
 	function printNewitemTR()
 	{
 		printOpFormIntro ('add');
-		echo '<tr><th class=tdleft>';
-		printImageHREF ('add', 'add pair', TRUE);
-		echo '</th><th class=tdleft>';
+		echo '<tr><td class=tdleft>';
 		$chapter = readChapter (CHAP_OBJTYPE);
 		// remove rack, row, location
 		unset ($chapter['1560'], $chapter['1561'], $chapter['1562']);
-		printSelect ($chapter, array ('name' => 'parent_objtype_id'));
-		echo '</th><th class=tdleft>';
-		printSelect ($chapter, array ('name' => 'child_objtype_id'));
-		echo "</th></tr></form>\n";
+		printSelect ($chapter, array ('name' => 'parent_objtype_id'),null,'elastic input-flush');
+		echo '</td><td class=tdleft>';
+		printSelect ($chapter, array ('name' => 'child_objtype_id'),null,'elastic input-flush');
+		echo '</td><td class=tdleft>';
+		printImageHREF ('i:plus', 't:Add pair', TRUE);
+		echo '</td></tr></form>';
 	}
 
 	global $nextorder;
 	$last_left_parent_id = NULL;
 	$order = 'odd';
-	echo '<br><table class=cooltable align=center border=0 cellpadding=5 cellspacing=0>';
-	echo '<tr><th>&nbsp;</th><th>Parent</th><th>Child</th></tr>';
+	startPortlet('Edit object container compatibility',12);
+	echo '<table class="table table-striped">';
+	echo '<thead><tr><th>Parent</th><th>Child</th><th style="width:1px;"></th></tr></thead>';
 	if (getConfigVar ('ADDNEW_AT_TOP') == 'yes')
 		printNewitemTR();
 	foreach (getObjectParentCompat() as $pair)
@@ -3878,14 +3881,15 @@ function renderObjectParentCompatEditor()
 			$order = $nextorder[$order];
 			$last_left_parent_id = $pair['parent_objtype_id'];
 		}
-		echo "<tr class=row_${order}><td>";
-		echo '<a href="' . makeHrefProcess (array ('op' => 'del', 'parent_objtype_id' => $pair['parent_objtype_id'], 'child_objtype_id' => $pair['child_objtype_id'])) . '">';
-		printImageHREF ('delete', 'remove pair');
-		echo "</a></td><td class=tdleft>${pair['parent_name']}</td><td class=tdleft>${pair['child_name']}</td></tr>\n";
+		echo "<tr class=row_${order}><td class=tdleft>${pair['parent_name']}</td><td class=tdleft>${pair['child_name']}</td><td>";
+		echo '<a class="btn" title="Remove pair" data-toggle="tooltip" href="' . makeHrefProcess (array ('op' => 'del', 'parent_objtype_id' => $pair['parent_objtype_id'], 'child_objtype_id' => $pair['child_objtype_id'])) . '">';
+		printImage ('i:trash');
+		echo "</a></td></tr>\n";
 	}
 	if (getConfigVar ('ADDNEW_AT_TOP') != 'yes')
 		printNewitemTR();
 	echo '</table>';
+	finishPortlet();
 }
 
 // Find direct sub-pages and dump as a list.
@@ -5559,27 +5563,28 @@ function renderFileSummary ($file)
 {
 	$summary = array();
 	$summary['Type'] = $file['type'];
-	$summary['Size'] =
-	(
-		isolatedPermission ('file', 'download', $file) ?
-		(
-			"<a href='?module=download&file_id=${file['id']}'>" .
-			getImageHREF ('download', 'Download file') . '</a>&nbsp;'
-		) : ''
-	) . formatFileSize ($file['size']);
+	$summary['Size'] = formatFileSize ($file['size']); 
 	$summary['Created'] = $file['ctime'];
 	$summary['Modified'] = $file['mtime'];
 	$summary['Accessed'] = $file['atime'];
+	
+
 	$summary['tags'] = '';
 	if (strlen ($file['comment']))
 		$summary['Comment'] = '<div class="dashed commentblock">' . string_insert_hrefs (htmlspecialchars ($file['comment'])) . '</div>';
+
+	if (isolatedPermission ('file', 'download', $file)) {
+		$summary['Download'] =		"<a href='?module=download&file_id=${file['id']}'>" .
+		getImage ('i:download') . ' Download file</a>&nbsp;';
+	}
+	
 	renderEntitySummary ($file, 'Summary', $summary);
 }
 
 function renderFileLinks ($links)
 {
-	startPortlet ('Links (' . count ($links) . ')');
-	echo "<table cellspacing=0 cellpadding='5' align='center' class='widetable'>\n";
+	startPortlet ('Links',8,'',count ($links));
+	echo "<table cellspacing=0 cellpadding='5' align='center' class='table table-striped'>\n";
 	foreach ($links as $link)
 	{
 		echo '<tr><td class=tdleft>';
@@ -5591,7 +5596,7 @@ function renderFileLinks ($links)
 			case 'ipv4vs':
 			case 'ipv4rspool':
 			case 'object':
-				renderCell (spotEntity ($link['entity_type'], $link['entity_id']));
+				renderCell (spotEntity ($link['entity_type'], $link['entity_id']),false);
 				break;
 			default:
 				echo formatEntityName ($link['entity_type']) . ': ';
@@ -5607,7 +5612,7 @@ function renderFileLinks ($links)
 
 function renderFilePreview ($pcode)
 {
-	startPortlet ('preview', 4, 'pull-right');
+	startPortlet ('Preview', 4,'padded');
 	echo $pcode;
 	finishPortlet();
 }
@@ -5617,57 +5622,80 @@ function renderFile ($file_id)
 {
 	global $nextorder, $aac;
 	$file = spotEntity ('file', $file_id);
-	echo "<h4>" . htmlspecialchars ($file['name']) . "</h4>";
+
+	echo '<div class="span8"><div class="row">';
 	callHook ('renderFileSummary', $file);
+
+
+	$links = getFileLinks ($file_id);
+	if (count ($links))
+		callHook ('renderFileLinks', $links);
+	echo '</div></div>';
 
 	if (isolatedPermission ('file', 'download', $file) and '' != ($pcode = getFilePreviewCode ($file)))
 	{
 		callHook ('renderFilePreview', $pcode);
 	}
 
-	$links = getFileLinks ($file_id);
-	if (count ($links))
-		callHook ('renderFileLinks', $links);
-
 }
 
 function renderFileReuploader ()
 {
-	startPortlet ('Replace existing contents');
-	printOpFormIntro ('replaceFile', array (), TRUE);
-	echo "<input type=file size=10 name=file tabindex=100>&nbsp;\n";
-	printImageHREF ('save', 'Save changes', TRUE, 101);
-	echo "</form>\n";
+	startPortlet ('Replace existing contents',12,'tpadded');
+	printOpFormIntro ('replaceFile', array (), TRUE,'form-flush');
+	
+	echo '<div class="control-group"><label class="control-label" >New File:</label><div class="controls">';
+	echo '<input type=file size=10 name=file tabindex=100>';
+	echo '</div></div>';
+	echo '<div class="form-actions form-flush">';
+	printImageHREF ('i:ok', 'Save changes', TRUE, 101);
+	echo "</div></form>";
+	
 	finishPortlet();
 }
 
 function renderFileDownloader ($file_id)
 {
-	echo "<br><center><a target='_blank' href='?module=download&file_id=${file_id}&asattach=1'>";
-	printImageHREF ('DOWNLOAD');
-	echo '</a></center>';
+	startPortlet ('Download File',12,'padded');
+	echo "<center><a class='btn' target='_blank' href='?module=download&file_id=${file_id}&asattach=1'>";
+	printImage ('i:download');
+	echo ' Download file</a></center>';
+	finishPortlet();
 }
 
 function renderFileProperties ($file_id)
 {
+	startPortlet('File Properties',12,'tpadded');
 	$file = spotEntity ('file', $file_id);
-	echo '<table border=0 align=center>';
-	printOpFormIntro ('updateFile');
-	echo "<tr><th class=tdright>MIME-type:</th><td class=tdleft><input tabindex=101 type=text name=file_type value='";
-	echo htmlspecialchars ($file['type']) . "'></td></tr>";
-	echo "<tr><th class=tdright>Filename:</th><td class=tdleft><input tabindex=102 type=text name=file_name value='";
-	echo htmlspecialchars ($file['name']) . "'></td></tr>\n";
-	echo "<tr><th class=tdright>Comment:</th><td class=tdleft><textarea tabindex=103 name=file_comment rows=10 cols=80>\n";
-	echo htmlspecialchars ($file['comment']) . "</textarea></td></tr>\n";
-	echo "<tr><th class=tdright>Actions:</th><td class=tdleft>";
-	echo "<a href='".
+	printOpFormIntro ('updateFile', array (), false,'form-flush');
+
+		echo '<div class="control-group"><label class="control-label" >MIME-type:</label><div class="controls">';
+		echo '<input tabindex=101 type=text name=file_type value="'. htmlspecialchars ($file['type']) . '">';
+		echo '</div></div>';
+		
+		echo '<div class="control-group"><label class="control-label" >Filename:</label><div class="controls">';
+		echo '<input tabindex=102 type=text name=file_name value="'. htmlspecialchars ($file['name']) . '">';
+		echo '</div></div>';
+
+
+		echo '<div class="control-group"><label class="control-label" >Comment:</label><div class="controls">';
+		echo '<textarea tabindex=103 name=file_comment rows=5>' .htmlspecialchars ($file['comment']) . '</textarea>';
+		echo '</div></div>';
+		
+		echo '<div class="form-actions form-flush">';
+
+		printImageHREF ('i:ok', 'Save', TRUE, 104);
+		
+	echo "<a class='btn' href='".
 		makeHrefProcess (array ('op'=>'deleteFile', 'page'=>'files', 'tab'=>'manage', 'file_id'=>$file_id)).
 		"' onclick=\"javascript:return confirm('Are you sure you want to delete the file?')\">" .
-		getImageHREF ('destroy', 'Delete file') . "</a>";
-	echo '</td></tr>';
-	echo "<tr><th class=submit colspan=2>";
-	printImageHREF ('SAVE', 'Save changes', TRUE, 102);
-	echo '</th></tr></form></table>';
+		getImage ('i:trash') . " Delete file</a>";
+
+
+	
+	echo '</div></form>';
+	
+	finishPortlet();
 }
 
 function renderFileBrowser ()
@@ -5751,7 +5779,7 @@ function renderFilesPortlet ($entity_type = NULL, $entity_id = 0,$width=8)
 	if (count ($files))
 	{
 		startPortlet ('Files',$width,'',count ($files));
-		echo "<table cellspacing=0 cellpadding='5' align='center' class='table table-striped'>\n";
+		echo "<table class='table table-striped'>\n";
 		echo "<thead><tr><th>File</th><th>Comment</th></tr></thead>";
 		foreach ($files as $file)
 		{
@@ -5759,7 +5787,7 @@ function renderFilesPortlet ($entity_type = NULL, $entity_id = 0,$width=8)
 			// That's a bit of overkill and ought to be justified after
 			// getFilesOfEntity() returns a standard cell list.
 			$file = spotEntity ('file', $file['id']);
-			renderCell ($file);
+			renderCell ($file,false);
 			echo "</td><td class=tdleft>${file['comment']}</td></tr>";
 		//	if (isolatedPermission ('file', 'download', $file) and '' != ($pcode = getFilePreviewCode ($file)))
 		//		echo "<tr><td colspan=2>${pcode}</td></tr>\n";
@@ -5831,7 +5859,7 @@ function renderFilesForEntity ($entity_id)
 		foreach ($filelist as $file_id => $file)
 		{
 			echo "<tr valign=top><td class=tdleft>";
-			renderCell (spotEntity ('file', $file_id));
+			renderCell (spotEntity ('file', $file_id),false);
 			echo "</td><td class=tdleft>${file['comment']}</td><td class=tdcenter>";
 			echo "<a class='btn' href='".makeHrefProcess(array('op'=>'unlinkFile', 'link_id'=>$file['link_id']))."'>";
 			printImage ('i:remove-circle', 'Unlink file');
@@ -5930,10 +5958,11 @@ function printIPNetInfoTDs ($netinfo, $decor = array())
 	echo "</td>";
 }
 
-function renderCell ($cell)
+function renderCell ($cell,$withborder=true)
 {
 
-	echo '<div class="infocell">';
+	if ($withborder)
+		echo '<div class="infocell">';
 	switch ($cell['realm'])
 	{
 	case 'user':
@@ -5966,19 +5995,22 @@ function renderCell ($cell)
 				break;
 		}
 
-		echo '<i class="icon-file"></i>&nbsp;';
-		echo  mkA ('<strong>' . niftyString ($cell['name']) . '</strong>', 'file', $cell['id']);
-		if (isset ($cell['links']) and count ($cell['links']))
-			printf ('%s', serializeFileLinks ($cell['links']));
-		echo count ($cell['etags']) ? ("" . serializeTags ($cell['etags']) . "") : '&nbsp;';
-
+		echo "<span class='pull-right label label-info'>";
 		if (isolatedPermission ('file', 'download', $cell))
 		{
 			// FIXME: reuse renderFileDownloader()
-			echo "<span class='pull-right label label-info'><a href='?module=download&file_id=${cell['id']}'><i class='icon-download icon-white'></i>";
+			echo "<a href='?module=download&file_id=${cell['id']}'><i class='icon-download icon-white'></i>";
 			echo '</a>&nbsp;';
 		}
-		echo formatFileSize ($cell['size']) . '</span></span>';
+		echo formatFileSize ($cell['size']) . '</span>';
+		
+		echo '<i class="icon-file"></i>&nbsp;';
+		echo  mkA ('<strong>' . niftyString ($cell['name']) . '</strong>', 'file', $cell['id']);
+		if (isset ($cell['links']) and count ($cell['links']))
+			printf ('<br>%s', serializeFileLinks ($cell['links']));
+		echo count ($cell['etags']) ? ("" . serializeTags ($cell['etags']) . "") : '&nbsp;';
+
+
 		break;
 	case 'ipv4vs':
 	case 'ipv4rspool':
@@ -5998,18 +6030,13 @@ function renderCell ($cell)
 		echo count ($cell['etags']) ? ("<br/><small>" . serializeTags ($cell['etags']) . "</small>") : '';
 		break;
 	case 'rack':
-		echo "<table class='slbcell vscell'><tr><td rowspan=3 width='5%'>";
 		$thumbwidth = getRackImageWidth();
 		$thumbheight = getRackImageHeight ($cell['height']);
-		echo "<img border=0 width=${thumbwidth} height=${thumbheight} title='${cell['height']} units' ";
+		echo "<img class='pull-left' style='padding-right:5px;' border=0 width=${thumbwidth} height=${thumbheight} title='${cell['height']} units' ";
 		echo "src='?module=image&img=minirack&rack_id=${cell['id']}'>";
-		echo "</td><td>";
-		echo mkA ('<strong>' . niftyString ($cell['name']) . '</strong>', 'rack', $cell['id']);
-		echo "</td></tr><tr><td>";
+		echo mkA ('<strong>' . niftyString ($cell['name']) . '</strong><br>', 'rack', $cell['id']);
 		echo niftyString ($cell['comment']);
-		echo "</td></tr><tr><td>";
-		echo count ($cell['etags']) ? ("<small>" . serializeTags ($cell['etags']) . "</small>") : '&nbsp;';
-		echo "</td></tr></table>";
+		echo count ($cell['etags']) ? ("<br><small>" . serializeTags ($cell['etags']) . "</small>") : '&nbsp;';
 		break;
 	case 'location':
 		echo "<table class='slbcell vscell'><tr><td rowspan=3 width='5%'>";
@@ -6029,7 +6056,8 @@ function renderCell ($cell)
 	default:
 		throw new InvalidArgException ('realm', $cell['realm']);
 	}
-	echo '</div>';
+	if ($withborder)
+		echo '</div>';
 }
 
 function renderRouterCell ($ip_bin, $ifname, $cell)
