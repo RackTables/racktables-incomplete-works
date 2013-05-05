@@ -32,6 +32,15 @@ input.elastic, select.elastic {
  height: 30px;
 }
 
+.table-compact th, .table-compact td {
+	padding: 0px 4px;
+}
+
+.atom input[type="checkbox"] {
+	margin:0;
+	margin-top:-2px;
+}
+
 .infocell {
 	padding: 4px;
 	white-space: nowrap;

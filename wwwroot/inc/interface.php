@@ -729,7 +729,7 @@ function renderRack ($rack_id, $hl_obj_id = 0)
 		printImageHREF('i:arrow-right','',false,0,'btn-mini');
 	}
 	echo "</h4></div>";
-	echo "<table class='rack table table-condensed' border=0 cellspacing=0 cellpadding=1>\n";
+	echo "<table class='rack table table-compact' border=0 cellspacing=0 cellpadding=1>\n";
 
 	echo "<tr><th width='10%'>&nbsp;</th><th width='20%'>Front</th>";
 	echo "<th width='50%'>Interior</th><th width='20%'>Back</th></tr>\n";
@@ -776,7 +776,7 @@ function renderRack ($rack_id, $hl_obj_id = 0)
 	// Get a list of all of objects Zero-U mounted to this rack
 	$zeroUObjects = getEntityRelatives('children', 'rack', $rack_id);
 	if (count($zeroUObjects) > 0) {
-		echo "<br><table width='75%' class='rack table table-condensed' border=0 cellspacing=0 cellpadding=1>\n";
+		echo "<br><table width='75%' class='rack table table-compact' border=0 cellspacing=0 cellpadding=1>\n";
 		echo "<tr><th>Zero-U:</th></tr>\n";
 		foreach ($zeroUObjects as $zeroUObject)
 		{
@@ -1165,7 +1165,7 @@ function renderGridForm ($rack_id, $filter, $header, $submit, $state1, $state2,$
 	// Grid form.
 	startPortlet ($header,$width,'padded');
 	addJS ('js/racktables.js');
-	echo "<table class='rack table table-condensed' border=0 cellspacing=0 cellpadding=1>\n";
+	echo "<table class='rack table table-compact' border=0 cellspacing=0 cellpadding=1>\n";
 	echo "<tr><th width='10%'>&nbsp;</th>";
 	echo "<th width='20%'><a href='javascript:;' onclick=\"toggleColumnOfAtoms('${rack_id}', '0', ${rackData['height']})\">Front</a></th>";
 	echo "<th width='50%'><a href='javascript:;' onclick=\"toggleColumnOfAtoms('${rack_id}', '1', ${rackData['height']})\">Interior</a></th>";
@@ -1902,12 +1902,11 @@ function renderPortsInfo($object_id)
 	}
 
 	global $nextorder;
-	echo "<table width='100%'><tr>";
+
 	if (! empty ($linkStatus))
 	{
-		echo "<td valign='top' width='50%'>";
-		startPortlet('Link status');
-		echo "<table width='80%' class='widetable' cellspacing=0 cellpadding='5px' align='center'><tr><th>Port<th><th>Link status<th>Link info</tr>";
+		startPortlet('Link status',6);
+		echo "<table class='table table-striped'><thead><tr><th>Port<th><th>Link status<th>Link info</tr></thead>";
 		$order = 'even';
 		foreach ($linkStatus as $pn => $link)
 		{
@@ -1943,16 +1942,16 @@ function renderPortsInfo($object_id)
 			echo '<td>' . $info;
 			echo '</tr>';
 		}
-		echo "</table></td>";
+		echo "</table>";
 		finishPortlet();
 	}
 
 	if (! empty ($macList))
 	{
-		echo "<td valign='top' width='50%'>";
+
 		$rendered_macs = '';
 		$mac_count = 0;
-		$rendered_macs .=  "<table width='80%' class='widetable' cellspacing=0 cellpadding='5px' align='center'><tr><th>MAC<th>Vlan<th>Port</tr>";
+		$rendered_macs .=  "<table class='table table-striped'><thead><tr><th>MAC<th>Vlan<th>Port</tr></thead>";
 		$order = 'even';
 		foreach ($macList as $pn => $list)
 		{
@@ -1969,12 +1968,11 @@ function renderPortsInfo($object_id)
 		}
 		$rendered_macs .= "</table></td>";
 
-		startPortlet("Learned MACs ($mac_count)");
+		startPortlet("Learned MACs ($mac_count)",6);
 		echo $rendered_macs;
 		finishPortlet();
 	}
 
-	echo "</td></tr></table>";
 }
 
 /*
@@ -2082,7 +2080,7 @@ function renderRackSpaceForObject ($object_id)
 			mergeGridFormToRack ($rackData);
 		echo "<td valign=top>";
 		echo "<h4>${rackData['name']}</h4>\n";
-		echo "<table class='rack table table-condensed' border=0 cellspacing=0 cellpadding=1>\n";
+		echo "<table class='rack table table-compact' border=0 cellspacing=0 cellpadding=1>\n";
 		echo "<tr><th width='10%'>&nbsp;</th>";
 		echo "<th width='20%'><a href='javascript:;' onclick=\"toggleColumnOfAtoms('${rack_id}', '0', ${rackData['height']})\">Front</a></th>";
 		echo "<th width='50%'><a href='javascript:;' onclick=\"toggleColumnOfAtoms('${rack_id}', '1', ${rackData['height']})\">Interior</a></th>";
@@ -8100,6 +8098,11 @@ function renderDiscoveredNeighbors ($object_id)
 		'livecdp' => 'getcdpstatus',
 		'livelldp' => 'getlldpstatus',
 	);
+	$title_by_tabno = array
+	(
+		'livecdp' => 'Live CDP',
+		'livelldp' => 'Live LLDP',
+	);
 	try
 	{
 		$neighbors = queryDevice ($object_id, $opcode_by_tabno[$tabno]);
@@ -8129,8 +8132,10 @@ function renderDiscoveredNeighbors ($object_id)
 
 	switchportInfoJS($object_id); // load JS code to make portnames interactive
 	printOpFormIntro ('importDPData');
-	echo '<br><table cellspacing=0 cellpadding=5 align=center class=widetable>';
-	echo '<tr><th colspan=2>local port</th><th></th><th>remote device</th><th colspan=2>remote port</th><th><input type="checkbox" checked id="cb-toggle"></th></tr>';
+	
+	startPortlet($title_by_tabno[$tabno],12);	
+	echo '<table class="table table-striped">';
+	echo '<thead><tr><th colspan=2>Local port</th><th></th><th>Remote device</th><th colspan=2>Remote port</th><th><input type="checkbox" checked id="cb-toggle"></th></tr></thead>';
 	$inputno = 0;
 	foreach ($neighbors as $local_port => $remote_list)
 	{
@@ -8282,7 +8287,7 @@ function renderDiscoveredNeighbors ($object_id)
 		echo '<tr><td colspan=7 align=center>' . getImageHREF ('CREATE', 'import selected', TRUE) . '</td></tr>';
 	}
 	echo '</table></form>';
-
+	finishPortlet();
 	addJS (<<<END
 $(document).ready(function () {
 	$('#cb-toggle').click(function (event) {
