@@ -2948,7 +2948,6 @@ function renderIPAddress ($ip_bin)
 {
 	global $aat, $nextorder;
 	$address = getIPAddress ($ip_bin);
-	echo "<div class='span12'><h3>${address['ip']}</h3></span>";
 
 	$summary = array();
 	if (strlen ($address['name']))
@@ -2961,7 +2960,7 @@ function renderIPAddress ($ip_bin)
 		$summary['Originated NAT connections'] = count ($address['outpf']);
 	if (isset ($address['inpf']))
 		$summary['Arriving NAT connections'] = count ($address['inpf']);
-	renderEntitySummary ($address, 'Summary', $summary,12);
+	renderEntitySummary ($address, $address['ip'].' Summary', $summary,12);
 
 	// render SLB portlet
 	if (! empty ($address['vslist']) or ! empty ($address['rsplist']))
@@ -3007,12 +3006,12 @@ function renderIPAddress ($ip_bin)
 	if (! empty ($address['vslist']) or ! empty ($address['rsplist']))
 		renderSLBTriplets ($address);
 
-	foreach (array ('outpf' => 'departing NAT rules', 'inpf' => 'Arriving NAT rules') as $key => $title)
+	foreach (array ('outpf' => 'Departing NAT rules', 'inpf' => 'Arriving NAT rules') as $key => $title)
 		if (! empty ($address[$key]))
 		{
 			startPortlet ($title,12);
 			echo "<table class='table table-striped'>";
-			echo "<tr><th>Proto.</th><th>From</th><th>To</th><th>Comment</th></tr>";
+			echo "<thead><tr><th>Proto.</th><th>From</th><th>To</th><th>Comment</th></tr></thead>";
 			foreach ($address[$key] as $rule)
 			{
 				echo "<tr>";
