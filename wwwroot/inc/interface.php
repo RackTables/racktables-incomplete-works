@@ -6630,7 +6630,7 @@ function render8021QOrderForm ($some_id)
 			}
 			echo '<td>' . getSelect ($options, array ('name' => 'vst_id', 'tabindex' => 103, 'size' => getConfigVar ('MAXSELSIZE')), $focus['prev_vstid']) . '</td>';
 		}
-		echo '<td>' . getImageHREF ('Attach', 'set', TRUE, 104) . '</td></tr></form>';
+		echo '<td>' . getImageHREF ('i:resize-small', 't:Bind', TRUE, 104) . '</td></tr></form>';
 	}
 	global $pageno;
 	$minuslines = array(); // indexed by object_id, which is unique
@@ -6666,15 +6666,18 @@ function render8021QOrderForm ($some_id)
 	default:
 		throw new InvalidArgException ('pageno', $pageno, 'this function only works for a fixed set of values');
 	}
-	echo "<br><table border=0 cellspacing=0 cellpadding=5 align=center>";
-	echo '<tr>';
+
+	startPortlet('802.1Q order',12);
+
+	echo "<table class='table table-striped table-edit'>";
+	echo '<thead><tr>';
 	if ($pageno != 'object')
-		echo '<th>switch</th>';
+		echo '<th>Switch</th>';
 	if ($pageno != 'vlandomain')
-		echo '<th>domain</th>';
+		echo '<th>Domain</th>';
 	if ($pageno != 'vst')
-		echo '<th>template</th>';
-	echo '<th>&nbsp;</th></tr>';
+		echo '<th>Template</th>';
+	echo '<th style="width:1px;"></th></tr></thead>';
 	// object_id is a UNIQUE in VLANSwitch table, so there is no sense
 	// in a "plus" row on the form, when there is already a "minus" one
 	if
@@ -6693,7 +6696,7 @@ function render8021QOrderForm ($some_id)
 		if ($pageno != 'vst')
 			spreadContext (spotEntity ('vst', $item['vst_id']));
 		if (! permitted (NULL, NULL, 'del'))
-			$cutblock = getImageHREF ('Cut gray', 'permission denied');
+			$cutblock = getImageHREF ('i:resize-full', 'permission denied');
 		else
 		{
 			$args = array
@@ -6705,8 +6708,8 @@ function render8021QOrderForm ($some_id)
 				'vdom_id' => $item['vdom_id'],
 				'vst_id' => $item['vst_id'],
 			);
-			$cutblock = '<a href="' . makeHrefProcess ($args) . '">';
-			$cutblock .= getImageHREF ('Cut', 'unbind') . '</a>';
+			$cutblock = '<a class="btn" title="unbind" data-toggle="tooltip" href="' . makeHrefProcess ($args) . '">';
+			$cutblock .= getImage('i:resize-full') . '</a>';
 		}
 		restoreContext ($ctx);
 		echo '<tr>';
@@ -6728,6 +6731,7 @@ function render8021QOrderForm ($some_id)
 	)
 		printNewItemTR();
 	echo '</table>';
+	finishPortlet();
 }
 
 function render8021QStatus ()
