@@ -5777,18 +5777,33 @@ function renderFilesPortlet ($entity_type = NULL, $entity_id = 0,$width=8)
 	if (count ($files))
 	{
 		startPortlet ('Files',$width,'',count ($files));
+
+		addJS("$(document).ready(function() {
+					$('.filepreviewrow').popover({
+						content: $(this).find('.popoverholder').html(),
+						html: true
+					});
+				});",true);
+
 		echo "<table class='table table-striped'>\n";
 		echo "<thead><tr><th>File</th><th>Comment</th></tr></thead>";
 		foreach ($files as $file)
 		{
-			echo "<tr valign=top><td class=tdleft>";
 			// That's a bit of overkill and ought to be justified after
 			// getFilesOfEntity() returns a standard cell list.
 			$file = spotEntity ('file', $file['id']);
+
+			if ((!isolatedPermission ('file', 'download', $file)) or '' == ($pcode = getFilePreviewCode ($file)))
+			{
+				$pcode ='Preview not available';
+			}
+
+			echo "<tr class='filepreviewrow' data-trigger='hover' data-title='Preview' ><td class=tdleft>";
+			echo '<div style="display:none;" class="popoverholder">'. $pcode .'</div>';
+
 			renderCell ($file,false);
 			echo "</td><td class=tdleft>${file['comment']}</td></tr>";
-		//	if (isolatedPermission ('file', 'download', $file) and '' != ($pcode = getFilePreviewCode ($file)))
-		//		echo "<tr><td colspan=2>${pcode}</td></tr>\n";
+
 		}
 		echo "</table>";
 		finishPortlet();
@@ -6106,9 +6121,9 @@ function getFilePreviewCode ($file)
 			}
 			if ($resampled)
 				$ret .= "<a href='?module=download&file_id=${file['id']}&asattach=no'>";
-			$ret .= "<img width=${width} height=${height} src='?module=image&img=preview&file_id=${file['id']}'>";
+			$ret .= "<img style='width:${width}px;height:${height}px;' src='?module=image&img=preview&file_id=${file['id']}'>";
 			if ($resampled)
-				$ret .= '</a><br>(click to zoom)';
+				$ret .= '</a>';
 			break;
 		case 'text/plain':
 			if ($file['size'] < getConfigVar ('PREVIEW_TEXT_MAXCHARS'))
