@@ -64,7 +64,7 @@ $CodePressMap = array
 (
 	'sql' => 'sql',
 	'php' => 'php',
-	'html' => 'html',
+	'html' => 'htmlmixed',
 	'css' => 'css',
 	'js' => 'javascript',
 );
@@ -5398,14 +5398,17 @@ function renderRackCodeViewer ()
 
 function renderRackCodeEditor ()
 {
-	addJS ('js/codepress/codepress.js');
+	addJS ('js/codemirror/codemirror.js');
+	addJS ('js/codemirror/rackcode.js');
+	addCSS ('js/codemirror/codemirror.css');
+
 	addJS (<<<ENDJAVASCRIPT
 function verify()
 {
 	$.ajax({
 		type: "POST",
 		url: "index.php",
-		data: {'module': 'ajax', 'ac': 'verifyCode', 'code': $(RCTA).getCode()},
+		data: {'module': 'ajax', 'ac': 'verifyCode', 'code': $(RCTA).text()},
 		success: function (data)
 		{
 			arr = data.split("\\n");
@@ -5425,27 +5428,35 @@ function verify()
 	});
 }
 
+
 $(document).ready(function() {
 	$("#SaveChanges")[0].disabled = "disabled";
 	$("#ShowMessage")[0].innerHTML = "";
 	$("#ShowMessage")[0].className = "";
+
+	var rackCodeMirror = CodeMirror.fromTextArea(document.getElementById("RCTA"),{
+							mode:'rackcode',
+							lineNumbers:true });
+	rackCodeMirror.on("change",function(cm,cmChangeObject){
+				$("#RCTA").text(cm.getValue());
+		});
+
 });
 ENDJAVASCRIPT
 	, TRUE);
 
 	$text = loadScript ('RackCode');
-	startPortlet('Permissions RackCode',12,'tpadded');
+	echo '<div class="span12"><div id="ShowMessage"></div></div>';
+	startPortlet('Permissions RackCode',12);
 	printOpFormIntro ('saveRackCode',array(),false,'form-flush');
-	echo '<table border=0 align=center>';
-	echo "<tr><td><textarea rows=20 name=rackcode id=RCTA class='span11 codepress rackcode'>";
-	echo $text . "</textarea></td></tr>\n";
-	echo "<tr><td align=center>";
-	echo '<div id="ShowMessage"></div></td></tr>';
-	echo '</table>';
+	echo "<textarea rows=20 name=rackcode id=RCTA class='span11 codepress rackcode'>";
+	echo $text . "</textarea>";
+
 	echo '<div class="form-actions form-flush">';
 	echo "<input class='btn' type='button' value='Verify' onclick='verify();'>";
 	echo "<input class='btn' type='submit' value='Save' disabled='disabled' id='SaveChanges' onclick='$(RCTA).toggleEditor();'>";
-//	printImageHREF ('SAVE', 'Save changes', TRUE);
+
+	//	printImageHREF ('SAVE', 'Save changes', TRUE);
 	echo "</div>";
 
 	echo "</form>";
@@ -6152,7 +6163,10 @@ function renderTextEditor ($file_id)
 	else
 		$syntax = "text";
 	echo '<table border=0 align=center>';
-	addJS ('js/codepress/codepress.js');
+	addJS ('js/codemirror/codemirror.js');
+	addJS ('js/codemirror/' .  $syntax . '.js');
+	addCSS ('js/codemirror/codemirror.css');
+
 	echo "<tr><td><textarea rows=45 cols=180 id=file_text name=file_text tabindex=101 class='codepress " . $syntax . "'>\n";
 	echo htmlspecialchars ($fullInfo['contents']) . '</textarea></td></tr>';
 	echo "<tr><td class=submit><input type=submit value='Save' onclick='$(file_text).toggleEditor();'>";
