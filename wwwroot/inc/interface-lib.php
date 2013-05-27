@@ -316,7 +316,7 @@ function getSelect ($optionList, $select_attrs = array(), $selected_id = NULL, $
 	return $ret;
 }
 
-function printNiftySelect ($groupList, $select_attrs = array(), $selected_id = NULL, $tree = false,$classes='')
+function printNiftySelect ($groupList, $select_attrs = array(), $selected_id = NULL, $tree = false, $classes=NULL)
 {
 	echo getNiftySelect ($groupList, $select_attrs, $selected_id , $tree ,$classes);
 }
@@ -324,7 +324,7 @@ function printNiftySelect ($groupList, $select_attrs = array(), $selected_id = N
 // Input is a cooked list of OPTGROUPs, each with own sub-list of OPTIONs in the same
 // format as printSelect() expects.
 // If tree is true, hierarchical drop-boxes are used, otherwise optgroups are used.
-function getNiftySelect ($groupList, $select_attrs, $selected_id = NULL, $tree = false,$classes='')
+function getNiftySelect ($groupList, $select_attrs, $selected_id = NULL, $tree = false, $classes=NULL)
 {
 
 	// special treatment for ungrouped data
@@ -357,7 +357,8 @@ function getNiftySelect ($groupList, $select_attrs, $selected_id = NULL, $tree =
 	}
 	else
 	{
-		$ret = '<select class="'. $classes . '" ';
+		$classes =  (is_null($classes))?'':' class="' . $classes . '" ';
+		$ret = '<select '. $classes;
 		foreach ($select_attrs as $attr_name => $attr_value)
 			$ret .= " ${attr_name}=${attr_value}";
 		$ret .= ">\n";
@@ -417,7 +418,7 @@ function getOptionTree ($tree_name, $tree_options, $tree_config = array())
 	return $ret;
 }
 
-function printImageHREF ($tag, $title = '', $do_input = FALSE, $tabindex = 0,$classes='')
+function printImageHREF ($tag, $title = '', $do_input = FALSE, $tabindex = 0, $classes=NULL)
 {
 	echo getImageHREF ($tag, $title, $do_input, $tabindex,$classes);
 }
@@ -426,10 +427,10 @@ function printImage ($tag, $title = '', $do_input = FALSE, $tabindex = 0) {
 	echo getImage($tag,$title,$do_input,$tabindex);
 }
 
-function getImage ($tag, $title = '', $do_input = FALSE, $tabindex = 0)
+function getImage ($tag, $title = '')
 {
 	 if (strlen($tag) > 2 && !strncmp($tag, 'i:', 2)) {
-		list($ident,$tag) = explode(':',$tag,2);
+		list($ident, $tag) = explode(':', $tag, 2);
 		return '<i class="icon-' . $tag . '"></i>';
 	 }
 
@@ -449,7 +450,7 @@ function getImage ($tag, $title = '', $do_input = FALSE, $tabindex = 0)
 
 
 // this would be better called mkIMG(), make "IMG" HTML element
-function getImageHREF ($tag, $title = '', $do_input = FALSE, $tabindex = 0,$classes='')
+function getImageHREF ($tag, $title = '', $do_input = FALSE, $tabindex = 0, $classes='')
 {
 	$buttonstatus = ($do_input == TRUE)?'':'disabled';
 
@@ -578,7 +579,7 @@ function addJS ($data, $inline = FALSE, $group = 'default')
 // They automatically appear in the <head> of your page.
 // $data is a CSS filename, or CSS code w/o tags around, if $inline = TRUE
 // Styles are included in the order of adding.
-function addCSS ($data, $inline = FALSE)
+function addCSS ($data, $inline = FALSE,$media=null)
 {
 	static $styles = array();
 	static $seen_filenames = array();
@@ -589,6 +590,7 @@ function addCSS ($data, $inline = FALSE)
 		$styles[] = array
 		(
 			'type' => 'inline',
+			'media' => $media,
 			'style' => $data,
 		);
 	elseif (! isset ($seen_filenames[$data]))
@@ -596,6 +598,7 @@ function addCSS ($data, $inline = FALSE)
 		$styles[] = array
 		(
 			'type' => 'file',
+			'media' => $media,
 			'style' => $data,
 		);
 		$seen_filenames[$data] = 1;
@@ -650,7 +653,7 @@ function getRenderedIPv4NetCapacity ($range)
 
 		$title_items = array();
 		$title2_items = array();
-		$done =0;
+		$done = 0;
 		if ($a_total != 0)
 		{
 			$title_items[] = "$a_used / $a_total";
@@ -666,11 +669,8 @@ function getRenderedIPv4NetCapacity ($range)
 		$title = implode (', ', $title_items);
 		$title2 = implode (', ', $title2_items);
 
-
-
 		$text = '<div class="progress pull-left" data-toggle="tooltip" title="' . $title2 . '" style="width:100px;margin-top:6px;margin-bottom:6px;"><div class="bar" style="width: '.$done.'%;"></div></div><small style="padding-left:5px;" class="title">' . $title . '</small>';
 
-		//$text = "<img width='$width' height=10 border=0 title='$title2' src='?module=progressbar4&px1=$px1&px2=$px2&px3=$px3'><small class='title'>$title</small>";
 	}
 	else
 	{
@@ -756,11 +756,14 @@ function printPageHeaders ()
 		echo $s . "\n";
 
 	// add CSS styles
-	foreach (addCSS (NULL) as $item)
+	foreach (addCSS (NULL) as $item) {
+
+		$media =  (!is_null($item['media']))?'media="' .$item['media'] .'"':'';
 		if ($item['type'] == 'inline')
-			echo '<style type="text/css">' . "\n" . trim ($item['style'], "\r\n") . "\n</style>\n";
+			echo '<style type="text/css" '.${media}.' >' . "\n" . trim ($item['style'], "\r\n") . "\n</style>\n";
 		elseif ($item['type'] == 'file')
-			echo "<link rel=stylesheet type='text/css' href='?module=chrome&uri=${item['style']}' />\n";
+			echo "<link rel=stylesheet type='text/css' ${media} href='?module=chrome&uri=${item['style']}' />\n";
+	}
 
 	// add JS scripts
 	foreach (addJS (NULL) as $group_name => $js_list)

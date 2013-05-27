@@ -2720,7 +2720,7 @@ function convertToBytes ($value)
 }
 
 // make "A" HTML element
-function mkA ($text, $nextpage, $bypass = NULL, $nexttab = NULL,$title='',$classes='')
+function mkA ($text, $nextpage, $bypass = NULL, $nexttab = NULL, $title=NULL, $classes=NULL)
 {
 	global $page, $tab;
 	if ($text == '')
@@ -2740,7 +2740,11 @@ function mkA ($text, $nextpage, $bypass = NULL, $nexttab = NULL,$title='',$class
 			throw new InvalidArgException ('bypass', '(NULL)');
 		$args[$page[$nextpage]['bypass']] = $bypass;
 	}
-	return '<a class="'.$classes.'" title="'.$title.'" href="' . makeHref ($args) . '">' . $text . '</a>';
+
+	$classes = (is_null($classes))?'':' class="' . $classes . '" ';
+	$title = (is_null($title))?'':' title="' . $title . '"';
+
+	return '<a'.$classes.$title.' href="' . makeHref ($args) . '">' . $text . '</a>';
 }
 
 // make "HREF" HTML attribute

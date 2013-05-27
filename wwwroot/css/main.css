@@ -41,11 +41,14 @@ input.elastic, select.elastic {
  webkit-box-sizing: border-box;
  moz-box-sizing: border-box;
  width: 100%;
- height: 30px;
+}
+
+input.elastic {
+	 height:30px;
 }
 
 .table-compact th, .table-compact td {
-	padding: 0px 4px;
+	padding: 0px 4px !important;
 }
 
 .atom input[type="checkbox"] {
@@ -207,6 +210,23 @@ td form {
 	margin: 0;
 	border-width:0;
 }
+
+.table-boarderless {
+	background-color: transparent;
+	padding:0;
+	margin: 0;
+	border-width:0;
+}
+
+.table-boarderless th, .table-boarderless td {
+     border-top: none;
+ }
+
+
+tr.centred th {
+    text-align: center !important;
+ }
+
 
 .validation-error {
 	border: 1px solid #b94a48 !important;

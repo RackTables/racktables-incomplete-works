@@ -188,6 +188,14 @@ REVERSED_RACKS_LISTSRC and NEAREST_RACKS_CHECKBOX.
 [1] http://php.net/manual/en/function.strftime.php
 ENDOFTEXT
 ,
+
+	'0.20.5' => <<<ENDOFTEXT
+
+	This release intoduces a new configuration option:
+	DISPLAY_DENSITY.
+
+ENDOFTEXT
+,
 );
 
 // At the moment we assume, that for any two releases we can
@@ -1649,6 +1657,9 @@ CREATE TABLE `MuninGraph` (
 			$query[] = "UPDATE Config SET varvalue = '%Y-%m-%d', description='PHP strftime() format to use for date output' WHERE varname = 'DATETIME_FORMAT'";
 			$query[] = "INSERT INTO `Config` (varname, varvalue, vartype, emptyok, is_hidden, is_userdefined, description) VALUES ('NEAREST_RACKS_CHECKBOX', 'yes', 'string', 'yes', 'no', 'yes', 'Enable nearest racks in port list filter by default')";
 			$query[] = "UPDATE Config SET varvalue = '0.20.4' WHERE varname = 'DB_VERSION'";
+			break;
+		case '0.20.5':
+			$query[] = "INSERT INTO `Config` (varname, varvalue, vartype, emptyok, is_hidden, is_userdefined, description) VALUES ('DISPLAY_DENSITY', 'confortable', 'string', 'no', 'no', 'yes', 'Display Density, comfortable, cozy or compact')";
 			break;
 		case 'dictionary':
 			$query = reloadDictionary();

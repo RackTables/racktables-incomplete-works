@@ -1,0 +1,118 @@
+html, body { padding: 0; margin: 0;}
+
+
+body { font: 12px 'Open Sans', Arial, sans-serif; padding-top: 50px; }
+
+.btn-group>.btn, .btn-group>.dropdown-menu, .btn-group>.popover {
+	font-size: 12px;
+}
+
+
+[class^="icon-"] {
+	margin-top: 1px !important;
+}
+
+h1, h2, h3, h4, h5, h6 {
+	margin: 5px 0;
+}
+
+.breadcrumb {
+	padding: 4px 7px;
+	margin-bottom:10px;
+}
+
+input.elastic {
+	 height:26px;
+}
+
+
+.nav-tabs>li>a {
+	padding-top: 4px;
+	padding-bottom: 4px;
+	line-height: inherit;
+}
+
+.box .box-header .title, .box .box-footer .title {
+	padding:6px;
+}
+.btn {
+	font-size:inherit;
+	line-height: 17px;
+	padding: 2px 6px 4px;
+}
+
+.input-append .btn, .input-prepend .btn {
+	line-height: 7px;
+}
+
+.tags .badge {
+	padding: 0px 4px ;
+}
+
+.padded {
+	padding: 7px;
+}
+
+.box .box-header .box-toolbar > li, .box .box-footer .box-toolbar > li {
+	padding-top: 6px;
+	line-height: inherit;
+}
+
+.table th {
+	padding: 3px;
+	line-height: inherit;
+}
+
+.table td {
+	padding: 1px;
+	padding-left: 3px;
+	line-height: inherit;
+}
+
+form {
+	margin: 0 0 10px;
+}
+
+select, textarea, input[type="text"], input[type="password"], input[type="datetime"], input[type="datetime-local"], input[type="date"], input[type="month"], input[type="time"], input[type="week"], input[type="number"], input[type="email"], input[type="url"], input[type="search"], input[type="tel"], input[type="color"], .uneditable-input {
+	padding: 2px 6px;
+}
+
+select, input[type="file"] {
+height: 26px;
+line-height: 26px;
+}
+
+.form-horizontal .control-group {
+	margin-bottom: 10px;
+}
+
+.form-actions {
+	padding: 10px 10px 10px;
+}
+
+label, input, button, select, textarea {
+	font-size: inherit;
+	font-weight: inherit;
+	line-height: inherit;
+}
+
+dl {
+	margin-bottom: 10px;
+}
+
+.infocell {
+	padding: 2px;
+}
+
+.navbar .brand {
+	padding: 6px 20px 4px;
+}
+
+
+.btn-spacer {
+	margin-bottom:5px;
+}
+
+hr {
+	margin: 10px 0;
+}
