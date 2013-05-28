@@ -4689,24 +4689,26 @@ function dragon ()
 // prints HTML-formatted varname and description
 function renderConfigVarName ($v)
 {
-	//echo '<span class="varname badge">' '</span> ';
-	echo '<span title="' . $v['varname'] . '" data-toggle="tooltip" class="varname">' . $v['description'] . ($v['is_userdefined'] == 'yes' ? '' : ' (system-wide)') . '</span>';
+	echo '<span style="font-size:.7em;font-weight:bold;">'  .$v['varname'] . '</span><br/> ';
+	echo  $v['description'] . ($v['is_userdefined'] == 'yes' ? '' : ' (system-wide)');
 }
 
 function renderUIConfig ()
 {
 	global $configCache, $nextorder;
-	startPortlet ('Current configuration',12,'padded');
-	echo '<dl class="dl-horizontal">';
+	startPortlet ('Current configuration',12);
+	echo "<table class='table table-striped'>";
+	echo "<thead><tr><th style='width:50%;' class='rightalign'>Name</th><th class=tdleft>Value</th></tr></thead>";
+
 	foreach ($configCache as $v)
 	{
 		if ($v['is_hidden'] != 'no')
 			continue;
-		echo "<dt style='width:450px;'>";
+		echo "<tr><td class='rightalign'>";
 		renderConfigVarName ($v);
-		echo "</dt><dd style='margin-left:470px;'>${v['varvalue']}&nbsp;</dd><br/>";
+		echo "</td><th>${v['varvalue']}</th></tr>";
 	}
-	echo "</dl>";
+	echo "</table>";
 	finishPortlet();
 }
 
@@ -5533,6 +5535,10 @@ function renderConfigEditor ()
 
 	printOpFormIntro ('upd',array(),false,'form-flush');
 
+	echo "<table style='margin-bottom:0;' class='table table-striped'>";
+	echo "<thead><tr><th style='width:50%;' class='rightalign'>Name</th><th class=tdleft>Value</th></tr></thead>";
+
+
 	$i = 0;
 	foreach ($configCache as $v)
 	{
@@ -5547,14 +5553,13 @@ function renderConfigEditor ()
 			$editbutton =  getImageHREF ('i:trash', 't:Reset');
 		}
 
-		echo "<input type=hidden name=${i}_varname value='${v['varname']}'>";
-		echo '<div class="control-group"><label style="width:450px;" class="control-label" >';
+		echo "<tr class='vcentred'><td  class='rightalign'><input type=hidden name=${i}_varname value='${v['varname']}'>";
 		renderConfigVarName ($v);
-		echo '</label><div style="margin-left:470px;" class="controls">';
-		echo "<div class='input-append'><input class='input-xlarge' type=text name=${i}_varvalue value='" .  htmlspecialchars ($v['varvalue'], ENT_QUOTES) . "'>{$editbutton}</div></div></div>";
+		echo '</td><td style="padding-right:44px;">';
+		echo "<div style='width:100%;' class='input-append'><input class='elastic' type=text name=${i}_varvalue value='" .  htmlspecialchars ($v['varvalue'], ENT_QUOTES) . "'>{$editbutton}</td></tr>";
 		$i++;
 	}
-	echo "<input type=hidden name=num_vars value=${i}><div class='form-actions form-flush'><span  style='margin-left:290px;'>";
+	echo "</table><input type=hidden name=num_vars value=${i}><div class='form-actions form-flush'><span  style='margin-left:290px;'>";
 
 	printImageHREF ('i:ok', 'Save', TRUE);
 

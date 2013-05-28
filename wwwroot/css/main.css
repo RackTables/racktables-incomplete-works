@@ -204,6 +204,11 @@ td.pcright {
 td form {
 	margin: 0;
 }
+
+.rightalign {
+	text-align: right !important;
+}
+
 .table .plain table, .table .plain tr, .table .plain td  {
 	background-color: transparent;
 	padding:0;
@@ -223,8 +228,12 @@ td form {
  }
 
 
-tr.centred th {
+tr.centred th, tr.centred td {
     text-align: center !important;
+}
+
+tr.vcentred th,  tr.vcentred td {
+    vertical-align:middle !important;
  }
 
 
@@ -248,7 +257,7 @@ tr.centred th {
 	margin-bottom:10px;
 }
 
-.form-flush, .form-flush input, .form-flush select {
+.form-flush, .form-flush input[type="text"], .form-flush input[type="password"], .form-flush input[type="submit"], .form-flush select {
 	margin-bottom:0px;
 	margin-top:0px;
 }
