@@ -1558,6 +1558,7 @@ INSERT INTO `PortCompat` (`type1`, `type2`) VALUES
 (1642,1642);
 
 INSERT INTO `Config` (varname, varvalue, vartype, emptyok, is_hidden, is_userdefined, description) VALUES
+('DISPLAY_DENSITY', 'comfortable', 'string', 'no', 'no', 'yes', 'Display Density, comfortable, cozy or compact'),
 ('MASSCOUNT','8','uint','no','no','yes','&quot;Fast&quot; form is this many records tall'),
 ('MAXSELSIZE','30','uint','no','no','yes','&lt;SELECT&gt; lists height'),
 ('enterprise','MyCompanyName','string','no','no','no','Organization name'),

@@ -1659,7 +1659,7 @@ CREATE TABLE `MuninGraph` (
 			$query[] = "UPDATE Config SET varvalue = '0.20.4' WHERE varname = 'DB_VERSION'";
 			break;
 		case '0.20.5':
-			$query[] = "INSERT INTO `Config` (varname, varvalue, vartype, emptyok, is_hidden, is_userdefined, description) VALUES ('DISPLAY_DENSITY', 'confortable', 'string', 'no', 'no', 'yes', 'Display Density, comfortable, cozy or compact')";
+			$query[] = "INSERT INTO `Config` (varname, varvalue, vartype, emptyok, is_hidden, is_userdefined, description) VALUES ('DISPLAY_DENSITY', 'comfortable', 'string', 'no', 'no', 'yes', 'Display Density, comfortable, cozy or compact')";
 			break;
 		case 'dictionary':
 			$query = reloadDictionary();
