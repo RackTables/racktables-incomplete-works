@@ -175,7 +175,6 @@ function renderInterfaceHTML ($pageno, $tabno, $payload)
 
   </body>
 </html>
-
 <?php
 }
 
@@ -6207,7 +6206,7 @@ function renderTextEditor ($file_id)
 	echo "</td></tr>\n</table></form>\n";
 }
 
-function showPathAndSearch ($pageno)
+function showPathAndSearch ($pageno, $tabno)
 {
 	// This function returns array of page numbers leading to the target page
 	// plus page number of target page itself. The first element is the target
@@ -6274,6 +6273,9 @@ function showPathAndSearch ($pageno)
 		$item .= '">' . $title['name'] . '</a></li>';
 		$items[] = $item;
 	}
+	echo "<input type=hidden name=last_page value=$pageno>";
+	echo "<input type=hidden name=last_tab value=$tabno>";
+	echo "<label>Search:<input type=text name=q size=20 tabindex=1000 value='".(isset ($_REQUEST['q']) ? htmlspecialchars ($_REQUEST['q'], ENT_QUOTES) : '')."'></label></form></div>";
 
 	echo '<li>' . implode('<li><span class="divider">/</span></li>', array_reverse ($items)) . '</li>';
 
@@ -8466,8 +8468,9 @@ function formatAttributeValue ($record)
 		if ($record['id'] == 3) // FQDN attribute
 		{
 			$protos_to_try = array (
-				'ssh' => 'SSH_OBJS_LISTSRC',
+				'ssh'    => 'SSH_OBJS_LISTSRC',
 				'telnet' => 'TELNET_OBJS_LISTSRC',
+				'rdp'    => 'RDP_OBJS_LISTSRC',
 			);
 			foreach ($protos_to_try as $proto => $cfgvar)
 				if (considerConfiguredConstraint (NULL, $cfgvar))

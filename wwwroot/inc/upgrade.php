@@ -1660,6 +1660,7 @@ CREATE TABLE `MuninGraph` (
 			break;
 		case '0.20.5':
 			$query[] = "INSERT INTO `Config` (varname, varvalue, vartype, emptyok, is_hidden, is_userdefined, description) VALUES ('DISPLAY_DENSITY', 'comfortable', 'string', 'no', 'no', 'yes', 'Display Density, comfortable, cozy or compact')";
+			$query[] = "INSERT INTO `Config` (varname, varvalue, vartype, emptyok, is_hidden, is_userdefined, description) VALUES ('RDP_OBJS_LISTSRC','false','string','yes','no','yes','Rackcode filter for RDP-managed objects')";
 			break;
 		case 'dictionary':
 			$query = reloadDictionary();
