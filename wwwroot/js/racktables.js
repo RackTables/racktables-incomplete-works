@@ -91,7 +91,6 @@ function getQueryString(key, default_)
 	else
 		return qs[1];
 }
-
 $(document).ready(function() {
 	$('a[data-confirm]').click(function(ev) {
 		var href = $(this).attr('href');

@@ -2685,7 +2685,6 @@ function formatEntityName ($name)
 	return 'invalid';
 }
 
-
 // Convert filesize to appropriate unit and make it human-readable
 function formatFileSize ($bytes)
 {
