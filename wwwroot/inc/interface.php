@@ -152,7 +152,7 @@ function renderInterfaceHTML ($pageno, $tabno, $payload)
 
     <div class="row">
         <div class="span12">
-			<?php showPathAndSearch ($pageno); ?>
+			<?php showPathAndSearch ($pageno, $tabno); ?>
         </div>
    </div>
 
@@ -535,8 +535,7 @@ function renderLocationRowForEditor ($subtree, $level = 0)
 			if ($locationinfo['refcnt'] > 0 || $locationinfo['kidc'] > 0)
 			printImageHREF ('i:trash');
 		else
-			echo '<a class="btn" title="Delete" data-toggle="tooltip" href="' . makeHrefProcess (array ('op' => 'deleteLocation', 'location_id' => $locationinfo['id']))
-				. '">' . getImage ('i:trash') . '</a>';
+			echo getOpLink (array ('op' => 'deleteLocation', 'location_id' => $locationinfo['id']), '', 'i:trash', 'Delete location');
 
 		echo "</div></form></td></tr>\n";
 		if ($locationinfo['kidc'])
@@ -624,11 +623,7 @@ function renderRackspaceRowEditor ()
 		if ($rc = count (listCells ('rack', $row_id)))
 			printImageHREF ('i:trash', "t:Cannot delete, ${rc} rack(s) here");
 		else
-		{
-			echo "<a class='btn' href=\"".makeHrefProcess(array('op'=>'deleteRow', 'row_id'=>$row_id))."\">";
-			printImage ('i:trash', 'Delete row');
-			echo "</a>";
-		}
+			echo getOpLink (array('op'=>'deleteRow', 'row_id'=>$row_id), '', 'i:trash', 'Delete row');
 
 
 		echo "</div></form></td></tr>\n";
@@ -937,14 +932,7 @@ function renderEditObjectForm()
 			echo '<div class="control-group"><label class="control-label" >' .  $label . '</label><div class="controls">';
 			echo mkA ($parent_details['name'], 'object', $parent_details['entity_id']);
 			echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
-			echo "<a class='btn' data-toggle='tooltip' title='Unlink container' href='".
-				makeHrefProcess(array(
-					'op'=>'unlinkEntities',
-					'link_id'=>$link_id)).
-
-			"'>";
-			printImage ('i:resize-full');
-			echo "</a>";
+			echo getOpLink (array('op'=>'unlinkEntities', 'link_id'=>$link_id), '', 'i:resize-full', 'Unlink container');
 			echo'</div></div>';
 			$label = '&nbsp;';
 		}
@@ -995,12 +983,7 @@ function renderEditObjectForm()
 			}
 
 			if (strlen ($record['value']))
-			{
-				echo "<a class='btn' title='Clear value' data-toggle='tooltip' href='".makeHrefProcess(array('op'=>'clearSticker', 'attr_id'=>$record['id']))."'" .
-				" onclick=\"javascript:return confirm('Are you sure you want to clear attribute value?')\">";
-				printImage ('i:trash');
-				echo '</a>';
-			}
+				echo getOpLink (array('op'=>'clearSticker', 'attr_id'=>$record['id']), '', 'i:trash', 'Clear value', 'need-confirmation');
 			else
 				printImageHREF ('i:trash');
 
@@ -1022,14 +1005,9 @@ function renderEditObjectForm()
 
 	printImageHREF ('i:ok', 'Save', TRUE);
 
-	echo "<a class='btn' href='".
-		makeHrefProcess(array('op'=>'deleteObject', 'page'=>'depot', 'tab'=>'addmore', 'object_id'=>$object_id)).
-		"' onclick=\"javascript:return confirm('Are you sure you want to delete the object?')\">" . getImage ('i:trash') . "&nbsp;Delete</a>";
+	echo getOpLink (array ('op'=>'deleteObject', 'page'=>'depot', 'tab'=>'addmore', 'object_id'=>$object_id), '' ,'i:trash', 'Delete object', 'need-confirmation');
 	echo "&nbsp;";
-	echo "<a class='btn' href='".
-		makeHrefProcess(array ('op'=>'resetObject')).
-		"' onclick=\"javascript:return confirm('Are you sure you want to reset most of object properties?')\">" . getImage('clear') . "&nbsp;Reset (cleanup) object</a>";
-
+	echo getOpLink (array ('op'=>'resetObject'), '' ,'clear', 'Reset (cleanup) object', 'need-confirmation');
 	echo '</div>';
 
 
@@ -1099,15 +1077,9 @@ function renderEditRackForm ($rack_id)
 
 
 		if (strlen ($record['value']))
-		{
-			echo "<a class='btn' title='Clear value' data-toggle='tooltip' href='".makeHrefProcess(array('op'=>'clearSticker', 'attr_id'=>$record['id']))."'" .
-				" onclick=\"javascript:return confirm('Are you sure you want to clear attribute value?')\">";
-			printImage ('i:trash');
-			echo '</a>';
-		} else {
+			echo getOpLink (array('op'=>'clearSticker', 'attr_id'=>$record['id']), '', 'i:trash', 'Clear value', 'need-confirmation');
+		else
 			printImageHREF ('i:trash', 't:Clear value');
-		}
-
 
 		echo '</div></div></div>';
 		$i++;
@@ -1120,9 +1092,7 @@ function renderEditRackForm ($rack_id)
 	if ($rack['isDeletable'])
 	{
 		echo'<div class="control-group"><label class="control-label" >Actions:</label><div class="controls">';
-		echo "<a class='btn' href='".
-			makeHrefProcess(array('op'=>'deleteRack')).
-			"' onclick=\"javascript:return confirm('Are you sure you want to delete the rack?')\">" . getImage ('i:trash', 'Delete rack') . " Delete</a>";
+		echo getOpLink (array('op'=>'clearSticker', 'attr_id'=>$record['id']), '', 'i:trash', 'Clear value', 'need-confirmation');
 		echo '</div></div>';
 	}
 
@@ -1613,14 +1583,9 @@ function renderPortsForObject ($object_id)
 			echo "<td>" . formatLoggedSpan ($port['last_log'], 'Reserved:', 'strong underline') . "</td>";
 			echo "<td><input class='input-small input-flush' type=text name=reservation_comment value='${port['reservation_comment']}'></td>";
 			echo "<td></td>";
-			echo "<td class=tdcenter><a class='btn' title='Use up this port' data-toggle='tooltip' href='".
-				makeHrefProcess(array(
-					'op'=>'useup',
-					'port_id'=>$port['id'],
-					)).
-			"'>";
-			printImage ('clear');
-			echo "</a></td>";
+			echo "<td class=tdcenter>";
+			echo getOpLink (array('op'=>'unlinkPort', 'port_id'=>$port['id'], ), '', 'clear', 'Unlink this port');
+			echo "</td>";
 		}
 		else
 		{
@@ -1666,9 +1631,9 @@ function renderPortsForObject ($object_id)
 	}
 
 			// clear ports link
-	echo "<div class='form-actions form-flush'><a class='btn' href='".
-		makeHrefProcess(array ('op'=>'deleteAll')).
-		"' onclick=\"javascript:return confirm('Are you sure you want to delete all existing ports?')\">" . getImage ('i:trash') . " Clear port list</a></div>";
+	echo "<div class='form-actions form-flush'>";	
+	echo getOpLink (array ('op'=>'deleteAll'), 'Clear port list', 'i:trash', '', 'need-confirmation');
+	echo "</div>";
 
 	finishPortlet();
 
@@ -1744,17 +1709,10 @@ function renderIPForObject ($object_id)
 		}
 		$alloc_list .= '<td>' . getSelect ($aat, array ('name' => 'bond_type'), $alloc['type'],true,'elastic input-flush') . "</td>";
 		$alloc_list .= $rendered_alloc['td_peers'];
-		$alloc_list .= "<td><div class='btn-group'>" .getImageHREF ('i:ok', 't:Save', TRUE) . "<a title='Delete this IP address' data-toggle='tooltip' class='btn' href='" .
-			makeHrefProcess
-			(
-				array
-				(
-					'op' => 'del',
-					'ip' => $alloc['addrinfo']['ip'],
-				)
-			) . "'>" .
-			getImage ('i:trash') .
-			"</a></div></td>";
+		$alloc_list .= "<td><div class='btn-group'>";
+		$alloc_list .= getImageHREF ('i:ok', 't:Save', TRUE);
+		$alloc_list .= getOpLink (array ('op' => 'del', 'ip' => $alloc['addrinfo']['ip']), '', 'i:trash', 'Delete this IP address');
+		$alloc_list .= "</div></td>";
 
 		$alloc_list .= "</form></tr>\n";
 	}
@@ -2469,7 +2427,7 @@ function renderIPSpaceEditor()
 			echo getRenderedIPNetCapacity ($netinfo);
 			echo '</td><td>';
 			if (! isIPNetworkEmpty ($netinfo))
-				printImageHREF ('i:trash', 'Cannot Delete. There are ' . count ($netinfo['addrlist']) . ' allocations inside');
+				printImageHREF ('i:trash', 't:Cannot Delete. There are ' . count ($netinfo['addrlist']) . ' allocations inside');
 			else
 				echo getOpLink (array	('op' => 'del', 'id' => $netinfo['id']), '', 'i:trash', 'Delete this prefix');
 			echo '</td></tr>';
@@ -2506,9 +2464,7 @@ END
 
 	startPortlet ('Add new',12,'tpadded');
 	////echo '<table border=0 cellpadding=10 align=center>';
-	// This form requires a name, so JavaScript validator can find it.
-	// No printOpFormIntro() hence
-	echo "<form class='form-horizontal form-flush' method=post name='add_new_range' action='".makeHrefProcess(array ('op'=>'add'))."'>\n";
+	printOpFormIntro ('add',array(),false,'form-flush');
 	// tags column
 	////echo '<tr><td rowspan=5>
 
@@ -3129,18 +3085,7 @@ function renderIPAddressAllocations ($ip_bin)
 			printSelect ($aat, array ('name' => 'bond_type'), $bond['type'],'input-flush');
 			echo "</td><td><div class='btn-group'>";
 			printImageHREF ('i:ok', 't:Save changes', TRUE);
-			echo "<a class='btn' data-toggle='tooltip' title='Unallocate address' href='"
-				. makeHrefProcess
-				(
-					array
-					(
-						'op' => 'del',
-						'object_id' => $bond['object_id']
-					)
-				)
-				. "'>";
-			printImage ('i:trash');
-			echo "</a>";
+			echo getOpLink (array ('op' => 'del', 'object_id' => $bond['object_id'] ), '', 'i:trash', 'Unallocate address');
 			echo "</div></td></form></tr>\n";
 		}
 	}
@@ -3230,18 +3175,16 @@ function renderNATv4ForObject ($object_id)
 		echo "</td><td class='description'>";
 		echo "<input class='input-flush elastic' type='text' name='description' value='${pf['description']}'></td><td><div class='btn-group'>";
 		printImageHREF ('i:ok', 't:Save', TRUE);
-		echo "<a class='btn' title='Delete NAT rule' data-toggle='tooltip' href='".
-			makeHrefProcess(array(
+		getOpLink  (
+			array (
 				'op'=>'delNATv4Rule',
 				'localip'=>$pf['localip'],
 				'localport'=>$pf['localport'],
 				'remoteip'=>$pf['remoteip'],
 				'remoteport'=>$pf['remoteport'],
 				'proto'=>$pf['proto'],
-			)).
-		"'>";
-		printImage ('i:trash');
-		echo "</a></div></td></form></tr>";
+			), '', 'i:trash', 'Delete NAT rule');
+		echo "</div></td></form></tr>";
 	}
 	if (getConfigVar ('ADDNEW_AT_TOP') != 'yes')
 		printNewItemTR ($focus['ipv4']);
@@ -3262,18 +3205,16 @@ function renderNATv4ForObject ($object_id)
 		echo '<td class="description">' . mkA ($pf['object_name'], 'object', $pf['object_id']);
 		echo "</td><td>" . getRenderedIPPortPair ($pf['remoteip'], $pf['remoteport']) . "</td>";
 		echo "<td class='description'>${pf['description']}</td>";
-		echo "<td><a class='btn' title='Delete NAT rule' data-toggle='tooltip' href='".
-			makeHrefProcess(array(
+		echo "<td>" . getOpLink (
+			array(
 				'op'=>'delNATv4Rule',
 				'localip'=>$pf['localip'],
 				'localport'=>$pf['localport'],
 				'remoteip'=>$pf['remoteip'],
 				'remoteport'=>$pf['remoteport'],
 				'proto'=>$pf['proto'],
-				)).
-		"'>";
-		printImage ('i:trash');
-		echo "</a></td></tr>";
+				), '', 'i:trash', 'Delete NAT rule');
+		echo "</td></tr>";
 	}
 
 	echo "</table>";
@@ -3816,11 +3757,11 @@ function renderOIFCompatEditor()
 	$order = 'odd';
 	foreach ($wdm_packs as $codename => $packinfo)
 	{
-		echo "<tr class=row_${order}><td class=tdleft>" . $packinfo['title'] . '</td><td><a class="btn" href="';
-		echo makeHrefProcess (array ('op' => 'addPack', 'standard' => $codename));
-		echo '">' . getImage ('i:plus') . '</a></td><td><a class="btn" href="';
-		echo makeHrefProcess (array ('op' => 'delPack', 'standard' => $codename));
-		echo '">' . getImage ('i:minus') . '</a></td></tr>';
+		echo "<tr><td class=tdleft>" . $packinfo['title'] . '</td><td>';
+		echo getOpLink (array ('op' => 'addPack', 'standard' => $codename), '', 'i:plus');
+		echo '</td><td>';
+		echo getOpLink (array ('op' => 'delPack', 'standard' => $codename), '', 'i:minus');
+		echo '</td></tr>';
 		$order = $nextorder[$order];
 	}
 	echo '</table>';
@@ -3842,9 +3783,8 @@ function renderOIFCompatEditor()
 		echo "<tr class=row_${order}><td class=tdleft>${pair['type1name']}</td><td class=tdleft>${pair['type2name']}</td>";
 
 		echo "<td>";
-		echo '<a class="btn" title="Remove pair" data-toggle="tooltip" href="' . makeHrefProcess (array ('op' => 'del', 'type1' => $pair['type1'], 'type2' => $pair['type2'])) . '">';
-		printImage ('i:trash');
-		echo "</a></td>";
+		echo getOpLink (array ('op' => 'del', 'type1' => $pair['type1'], 'type2' => $pair['type2']), '', 'i:trash', 'remove pair');
+		echo "</td>";
 
 		echo"</tr>";
 	}
@@ -3908,9 +3848,8 @@ function renderObjectParentCompatEditor()
 			$last_left_parent_id = $pair['parent_objtype_id'];
 		}
 		echo "<tr class=row_${order}><td class=tdleft>${pair['parent_name']}</td><td class=tdleft>${pair['child_name']}</td><td>";
-		echo '<a class="btn" title="Remove pair" data-toggle="tooltip" href="' . makeHrefProcess (array ('op' => 'del', 'parent_objtype_id' => $pair['parent_objtype_id'], 'child_objtype_id' => $pair['child_objtype_id'])) . '">';
-		printImage ('i:trash');
-		echo "</a></td></tr>\n";
+		echo getOpLink (array ('op' => 'del', 'parent_objtype_id' => $pair['parent_objtype_id'], 'child_objtype_id' => $pair['child_objtype_id']), '', 'i:trash', 'remove pair');
+		echo "</td></tr>\n";
 	}
 	if (getConfigVar ('ADDNEW_AT_TOP') != 'yes')
 		printNewitemTR();
@@ -4022,10 +3961,7 @@ function renderEditLocationForm ($location_id)
 
 		if (strlen ($record['value']))
 		{
-			echo "<a class='btn' data-toggle='tooltip' title='Clear value' href='".makeHrefProcess(array('op'=>'clearSticker', 'attr_id'=>$record['id']))."'" .
-				" onclick=\"javascript:return confirm('Are you sure you want to clear attribute value?');\">";
-			printImage ('i:trash');
-			echo '</a>';
+			echo getOpLink (array ('op'=>'clearSticker', 'attr_id'=>$record['id']), '', 'i:trash', 'Clear value', 'need-confirmation');
 		} else {
 			printImageHREF('i:trash','t:Clear value');
 		}
@@ -4047,13 +3983,9 @@ function renderEditLocationForm ($location_id)
 	printImageHREF ('i:ok', 'Save', TRUE);
 
 	if (count ($location['locations']) == 0 and count ($location['rows']) == 0)
-	{
-		echo "<a class='btn' href='".
-			makeHrefProcess(array('op'=>'deleteLocation')).
-			"' onclick=\"javascript:return confirm('Are you sure you want to delete the location?')\">" . getImage ('i:trash', 'Delete location') . "</a>";
-	} else {
+		echo getOpLink (array('op'=>'deleteLocation'), '', 'i:trash', 'Delete location', 'need-confirmation');
+	else
 		printImageHREF('i:trash','Delete location');
-	}
 
 	echo '</div>';
 
@@ -4183,11 +4115,7 @@ function renderChapterEditor ($tgt_chapter_no)
 		if ($refcnt[$key])
 			printImageHREF ('nodelete', 'referenced ' . $refcnt[$key] . ' time(s)');
 		else
-		{
-			echo "<a href='".makeHrefProcess(array('op'=>'del', 'dict_key'=>$key))."'>";
-			printImageHREF ('delete', 'Delete word');
-			echo "</a>";
-		}
+			echo getOpLink (array('op'=>'del', 'dict_key'=>$key), '', 'i:trash', 'Delete word');
 		echo '</td>';
 		echo "<td class=tdleft><input type=text name=dict_value size=64 value='${value}'></td><td>";
 		printImageHREF ('save', 'Save changes', TRUE);
@@ -4246,12 +4174,7 @@ function renderChaptersEditor ()
 		elseif ($chapter['mapped'])
 			printImageHREF ('i:trash', 't:Cannot delete, used in attribute map');
 		else
-		{
-			echo "<a class='btn' href='".makeHrefProcess(array('op'=>'del', 'chapter_no'=>$chapter_id))."'>";
-			printImage('destroy', 'Remove chapter');
-			echo "</a>";
-		}
-
+			echo getOpLink (array('op'=>'del', 'chapter_no'=>$chapter_id), '', 'destroy', 'Remove chapter');
 		echo '</div></td></tr>';
 		echo '</form>';
 	}
@@ -4318,12 +4241,7 @@ function renderEditAttributesForm ()
 		elseif (count ($attr['application']))
 			printImageHREF ('i:trash', 't:'.count ($attr['application']) . ' reference(s) in attribute map');
 		else
-		{
-			echo "<a class='btn' title='Remove attribute' data-toggle='tooltip' href='".makeHrefProcess(array('op'=>'del', 'attr_id'=>$attr['id']))."'>";
-			printImage ('i:trash');
-			echo '</a>';
-		}
-
+			echo getOpLink (array('op'=>'del', 'attr_id'=>$attr['id']), '', 'i:trash', 'Remove attribute');
 		echo '</div></td></tr>';
 		echo '</form>';
 	}
@@ -4390,11 +4308,7 @@ function renderEditAttrMapForm ()
 		if ($app['refcnt'])
 			printImageHREF ('i:trash', 't:Cannot delete, '.$app['refcnt'] . ' value(s) stored for objects');
 		else
-		{
-			echo "<a class='btn' title='Remove mapping' data-toggle='tooltip' href='".makeHrefProcess(array('op'=>'del', 'attr_id'=>$attr['id'], 'objtype_id'=>$app['objtype_id']))."'>";
-			printImage ('i:trash');
-			echo "</a>";
-		}
+			echo getOpLink (array('op'=>'del', 'attr_id'=>$attr['id'], 'objtype_id'=>$app['objtype_id']), '', 'i:trash', 'Remove mapping');
 		echo "</td></tr>";
 		}
 
@@ -5000,8 +4914,7 @@ function renderTagRowForEditor ($taginfo, $level = 0)
 	if ($taginfo['refcnt']['total'] > 0 or $taginfo['kidc'])
 		printImageHREF ('i:trash', 't:'.$taginfo['refcnt']['total'] . ' references, ' . $taginfo['kidc'] . ' sub-tags');
 	else
-		echo '<a class="btn" title="Delete tag" data-toggle="tooltip" href="' . makeHrefProcess (array ('op' => 'destroyTag', 'tag_id' => $taginfo['id']))
-			. '">' . getImage ('i:trash') . '</a>';
+		echo getOpLink (array ('op' => 'destroyTag', 'tag_id' => $taginfo['id']), '', 'i:trash', 'Delete tag');
 
 	echo '</div></form></td></tr>';
 	foreach ($taginfo['kids'] as $kid)
@@ -5064,7 +4977,7 @@ END
 			echo '<tr>';
 			echo '<td>' . $taginfo['tag'] . '</td>';
 			echo '<td>' . getSelect ($options, array ('name' => 'parent_id'), $taglist[$taginfo['id']]['parent_id']) . '</td>';
-			echo '<td>' . getImageHREF ('save', 'Save changes', TRUE) . '</td>';
+			echo '<td>' . getImageHREF ('i:ok', 'Save changes', TRUE) . '</td>';
 			echo '</tr></form>';
 		}
 		echo '</table>';
@@ -5547,9 +5460,9 @@ function renderConfigEditor ()
 			continue;
 
 		if ($v['is_altered'] == 'yes') {
-			$editbutton = "<a class='btn' href=\"".	makeHrefProcess(array('op'=>'reset', 'varname'=>$v['varname']))	."\"><i class='icon-trash'></i></a>";
+			$editbutton = getOpLink (array('op'=>'reset',  'varname'=>$v['varname']), '', 'i:trash', 'Reset');
 		} else	{
-			$editbutton =  getImageHREF ('i:trash', 't:Reset');
+			$editbutton =  getImageHREF ('i:trash', 't:Nothing to reset');
 		}
 
 		echo "<tr class='vcentred'><td  class='rightalign'><input type=hidden name=${i}_varname value='${v['varname']}'>";
@@ -5728,12 +5641,7 @@ function renderFileProperties ($file_id)
 
 		printImageHREF ('i:ok', 'Save', TRUE, 104);
 
-	echo "<a class='btn' href='".
-		makeHrefProcess (array ('op'=>'deleteFile', 'page'=>'files', 'tab'=>'manage', 'file_id'=>$file_id)).
-		"' onclick=\"javascript:return confirm('Are you sure you want to delete the file?')\">" .
-		getImage ('i:trash') . " Delete file</a>";
-
-
+		echo getOpLink (array ('op'=>'deleteFile', 'page'=>'files', 'tab'=>'manage', 'file_id'=>$file_id), '', 'i:trash', 'Delete file', 'need-confirmation');
 
 	echo '</div></form>';
 
@@ -5798,12 +5706,7 @@ function renderFileManager ()
 			if (count ($file['links']))
 				printImageHREF ('i:trash', 'References (' . count ($file['links']) . ')');
 			else
-			{
-				echo "<a class='btn' href='".makeHrefProcess(array('op'=>'deleteFile', 'file_id'=>$file['id'])).
-					"' onclick=\"javascript:return confirm('Are you sure you want to delete the file?')\">";
-				printImage ('i:trash', '');
-				echo "&nbsp;Delete file</a>";
-			}
+				echo getOpLink (array('op'=>'deleteFile', 'file_id'=>$file['id']), '', 'i:trash', 'Delete file', 'need-confirmation');
 			echo "</td></tr>";
 			$order = $nextorder[$order];
 		}
@@ -5882,9 +5785,6 @@ function renderFilesForEntity ($entity_id)
   </div>
 <div class="form-actions form-flush">
 
-
-
-
 <?php
 
 	printImageHREF ('i:upload', 'Upload file', TRUE, 102);
@@ -5918,9 +5818,8 @@ function renderFilesForEntity ($entity_id)
 			echo "<tr valign=top><td class=tdleft>";
 			renderCell (spotEntity ('file', $file_id),false);
 			echo "</td><td class=tdleft>${file['comment']}</td><td class=tdcenter>";
-			echo "<a class='btn' href='".makeHrefProcess(array('op'=>'unlinkFile', 'link_id'=>$file['link_id']))."'>";
-			printImage ('i:resize-full', 'Unlink file');
-			echo "</a></td></tr>\n";
+			echo getOpLink (array('op'=>'unlinkFile', 'link_id'=>$file['link_id']), '', 'i:resize-full', 'Unlink file');
+			echo "</td></tr>\n";
 		}
 		echo "</table>";
 		finishPortlet();
@@ -6275,7 +6174,7 @@ function showPathAndSearch ($pageno, $tabno)
 	}
 	echo "<input type=hidden name=last_page value=$pageno>";
 	echo "<input type=hidden name=last_tab value=$tabno>";
-	echo "<label>Search:<input type=text name=q size=20 tabindex=1000 value='".(isset ($_REQUEST['q']) ? htmlspecialchars ($_REQUEST['q'], ENT_QUOTES) : '')."'></label></form></div>";
+	//echo "<label>Search:<input type=text name=q size=20 tabindex=1000 value='".(isset ($_REQUEST['q']) ? htmlspecialchars ($_REQUEST['q'], ENT_QUOTES) : '')."'></label></form></div>";
 
 	echo '<li>' . implode('<li><span class="divider">/</span></li>', array_reverse ($items)) . '</li>';
 
@@ -6602,11 +6501,10 @@ function renderIIFOIFCompatEditor()
 	echo "<thead><tr><th>${packinfo['title']}</th><th style='width:1px;'></th></tr></thead>";
 		foreach ($packinfo['iif_ids'] as $iif_id)
 		{
-			echo "<tr class=row_${order}><td class=tdleft>" . $iif[$iif_id] . '</td><td><div class="btn-group"><a class="btn" href="';
-			echo makeHrefProcess (array ('op' => 'addPack', 'standard' => $codename, 'iif_id' => $iif_id));
-			echo '">' . getImage ('i:plus') . '</a><a class="btn" href="';
-			echo makeHrefProcess (array ('op' => 'delPack', 'standard' => $codename, 'iif_id' => $iif_id));
-			echo '">' . getImage ('i:minus') . '</a></div></td></tr>';
+			echo "<tr class=row_${order}><th class=tdleft>" . $iif[$iif_id] . '</th><td><div class="btn-group">';
+			echo getOpLink (array ('op' => 'addPack', 'standard' => $codename, 'iif_id' => $iif_id), '', 'i:plus');
+			echo getOpLink (array ('op' => 'delPack', 'standard' => $codename, 'iif_id' => $iif_id), '', 'i:minus');
+			echo '</div></td></tr>';
 			$order = $nextorder[$order];
 		}
 	echo '</table>';
@@ -6630,9 +6528,8 @@ function renderIIFOIFCompatEditor()
 			$last_iif_id = $record['iif_id'];
 		}
 		echo "<tr class=row_${order}><td class=tdleft>${record['iif_name']}</td><td class=tdleft>${record['oif_name']}</td><td>";
-		echo '<a class="btn" href="' . makeHrefProcess (array ('op' => 'del', 'iif_id' => $record['iif_id'], 'oif_id' => $record['oif_id'])) . '">';
-		printImage ('i:trash', 't:Remove pair');
-		echo "</a></td></tr>";
+		echo getOpLink (array ('op' => 'del', 'iif_id' => $record['iif_id'], 'oif_id' => $record['oif_id']), '', 'i:trash', 'remove pair');
+		echo "</td></tr>";
 	}
 	if (getConfigVar ('ADDNEW_AT_TOP') != 'yes')
 		printNewitemTR();
@@ -6772,8 +6669,7 @@ function render8021QOrderForm ($some_id)
 				'vdom_id' => $item['vdom_id'],
 				'vst_id' => $item['vst_id'],
 			);
-			$cutblock = '<a class="btn" title="unbind" data-toggle="tooltip" href="' . makeHrefProcess ($args) . '">';
-			$cutblock .= getImage('i:resize-full') . '</a>';
+			$cutblock = getOpLink ($args, '', 'i:resize-full', 'unbind');
 		}
 		restoreContext ($ctx);
 		echo '<tr>';
@@ -6905,12 +6801,7 @@ function renderVLANDomainListEditor ()
 		if ($dominfo['switchc'] or $dominfo['vlanc'] > 1)
 			printImageHREF ('nodestroy', 'domain used elsewhere');
 		else
-		{
-			echo '<a href="';
-			echo makeHrefProcess (array ('op' => 'del', 'vdom_id' => $vdom_id)) . '">';
-			printImageHREF ('destroy', 'delete domain');
-			echo '</a>';
-		}
+			echo getOpLink (array ('op' => 'del', 'vdom_id' => $vdom_id), '', 'i:trash', 'delete domain');
 		echo '</td><td><input name=vdom_descr type=text size=48 value="';
 		echo niftyString ($dominfo['description'], 0) . '">';
 		echo '</td><td>';
@@ -7015,11 +6906,7 @@ function renderVLANDomainVLANList ($vdom_id)
 		if ($vlan_info['portc'] or $vlan_id == VLAN_DFL_ID)
 			printImageHREF ('nodestroy', $vlan_info['portc'] . ' ports configured');
 		else
-		{
-			echo '<a href="';
-			echo makeHrefProcess (array ('op' => 'del', 'vlan_id' => $vlan_id)) . '">';
-			echo getImageHREF ('destroy', 'delete VLAN') . '</a>';
-		}
+			echo getOpLink (array ('op' => 'del', 'vlan_id' => $vlan_id), '', 'i:trash', 'delete VLAN');
 		echo '</td><td class=tdright><tt>' . $vlan_id . '</tt></td><td>';
 		printSelect ($vtoptions, array ('name' => 'vlan_type'), $vlan_info['vlan_type']);
 		echo '</td><td>';
@@ -7171,8 +7058,7 @@ function renderObject8021QPorts ($object_id)
 	}
 	echo '</form>';
 	if (permitted (NULL, NULL, NULL, array (array ('tag' => '$op_recalc8021Q'))))
-		echo '<a class="btn" style="margin-left:5px;" href="' . makeHrefProcess (array ('op' => 'exec8021QRecalc')) . '">' .
-			getImage ('i:refresh') . ' Recalculate uplinks and downlinks</a>';
+		echo getOpLink (array ('op' => 'exec8021QRecalc'), '', 'i:refresh', 'Recalculate uplinks and downlinks');
 	echo '</div></td></tr></table>';
 	if ($req_port_name == '');
 		echo '</form>';
@@ -7638,18 +7524,9 @@ function renderVLANIPLinks ($some_id)
 			echo formatVLANAsRichText ($vlaninfo);
 			break;
 		}
-		echo '</td><td><a title="Unbind" data-toggle="tooltip" class="btn" href="';
-		echo makeHrefProcess
-		(
-			array
-			(
-				'id' => $some_id,
-				'op' => 'unbind',
-				'id' => $item['net_id'],
-				'vlan_ck' => $item['domain_id'] . '-' . $item['vlan_id']
-			)
-		);
-		echo '">' . getImage ('i:resize-full') . '</a></td></tr>';
+		echo '</td><td>';
+		echo getOpLink (array ('id' => $some_id, 'op' => 'unbind', 'id' => $item['net_id'], 'vlan_ck' => $item['domain_id'] . '-' . $item['vlan_id']), '', 'i:resize-full', 'unbind');
+		echo '</td></tr>';
 	}
 	if (getConfigVar ('ADDNEW_AT_TOP') != 'yes')
 		printNewItemTR ($select_name, $plusoptions, $extra);
@@ -8011,10 +7888,7 @@ function renderVSTListEditor()
 		if ($vst_info['switchc'])
 			printImageHREF ('nodestroy', 'template used elsewhere');
 		else
-		{
-			echo '<a href="' . makeHrefProcess (array ('op' => 'del', 'vst_id' => $vst_id)) . '">';
-			echo getImageHREF ('destroy', 'delete template') . '</a>';
-		}
+			echo getOpLink (array ('op' => 'del', 'vst_id' => $vst_id), '', 'i:trash', 'delete template');
 		echo '</td>';
 		echo '<td><input name=vst_descr type=text size=48 value="' . niftyString ($vst_info['description'], 0) . '"></td>';
 		echo '<td>' . getImageHREF ('save', 'update template', TRUE) . '</td>';
@@ -8528,9 +8402,9 @@ function renderObjectLogEditor ()
 		echo "<tr class=row_${order} valign=top>";
 		echo '<td class=tdleft><span class="label label-info">' . $row['date'] . '</span><br>' . $row['user'] . '</td>';
 		echo '<td class="logentry">' . string_insert_hrefs (htmlspecialchars ($row['content'], ENT_NOQUOTES)) . '</td>';
-		echo "<td class=tdleft><a data-toggle='tooltip' title='Delete'class='btn' href=\"".makeHrefProcess(array('op'=>'del', 'log_id'=>$row['id']))."\">";
-		printImage ('i:trash') ;
-		echo "</a></td></tr>\n";
+		echo "<td class=tdleft>";
+		echo getOpLink (array('op'=>'del', 'log_id'=>$row['id']), '', 'i:trash', 'Delete log entry');
+		echo "</td></tr>\n";
 		$order = $nextorder[$order];
 	}
 	echo '</table>';
@@ -8810,11 +8684,7 @@ function renderObjectCactiGraphs ($object_id)
 		echo "<a href='${cacti_url}/graph.php?action=view&local_graph_id=${graph_id}&rra_id=all' target='_blank'>";
 		echo "<img src='index.php?module=image&img=cactigraph&object_id=${object_id}&server_id=${graph['server_id']}&graph_id=${graph_id}' alt='${text}' title='${text}'></a></td><td>";
 		if(permitted('object','cacti','del'))
-		{
-			echo "<a href='" . makeHrefProcess (array ('op' => 'del', 'server_id' => $graph['server_id'], 'graph_id' => $graph_id));
-			echo "' onclick=\"javascript:return confirm('Are you sure you want to delete the graph?')\">";
-			echo getImageHREF ('i:resize-full', 'Unlink graph') . "</a>";
-		}
+			echo getOpLink (array ('op' => 'del', 'server_id' => $graph['server_id'], 'graph_id' => $graph_id), '', 'i:resize-full', 'Unlink graph', 'need-confirmation');
 		echo "&nbsp; &nbsp;${graph['caption']}";
 		echo "</td></tr>";
 	}
@@ -8862,9 +8732,9 @@ function renderObjectMuninGraphs ($object_id)
 		echo "<tr><td>";
 		echo "<a href='${munin_url}/${domain}/${object['dname']}/${graph_name}.html' target='_blank'>";
 		echo "<img src='index.php?module=image&img=muningraph&object_id=${object_id}&server_id=${graph['server_id']}&graph=${graph_name}' alt='${text}' title='${text}'></a></td>";
-		echo "<td><a href='" . makeHrefProcess (array ('op' => 'del', 'server_id' => $graph['server_id'], 'graph' => $graph_name));
-		echo "' onclick=\"javascript:return confirm('Are you sure you want to delete the graph?')\">";
-		echo getImageHREF ('i:resize-full', 'Unlink graph') . "</a>&nbsp; &nbsp;${graph['caption']}";
+		echo "<td>";
+		echo getOpLink (array ('op' => 'del', 'server_id' => $graph['server_id'], 'graph' => $graph_name), '', 'i:resize-full', 'Unlink graph', 'need-confirmation');
+		echo "&nbsp; &nbsp;${graph['caption']}";
 		echo "</td></tr>";
 	}
 	echo '</table>';
@@ -8904,8 +8774,8 @@ function renderEditVlan ($vlan_ck)
 	$delete_line = '';
 	if ($portc)
 	{
-		$clear_line .= '<a class="btn" title="Remove this vlan from '.$portc .' ports." data-toggle="tooltip" href="' . makeHrefProcess (array ('op' => 'clear')) . '">';
-		$clear_line .= getImage ('i:trash') . ' Remove</a>';
+		$clear_line .= getOpLink (array ('op' => 'clear'), 'remove', 'i:trash', "remove this VLAN from $portc ports") .
+				' this VLAN from ' . mkA ("${portc} ports", 'vlan', $vlan_ck);
 	}
 
 	$reason = '';
@@ -9008,10 +8878,7 @@ function renderEditUCSForm()
 	echo "<tr><th class=tdright>Actions:</th><td class=tdleft>";
 	printImageHREF ('DQUEUE sync_ready', 'Auto-populate UCS', TRUE);
 	echo '</td><td class=tdright>';
-	echo "<a href='".
-		makeHrefProcess (array ('op' => 'cleanupUCS')) .
-		"'  onclick=\"javascript:return confirm('Are you sure you want to cleanup UCS Domain?')\">" .
-		getImageHREF ('CLEAR', 'Clean-up UCS domain') . "</a>";
+	echo getOpLink (array ('op' => 'cleanupUCS'), '', 'CLEAR', 'Clean-up UCS domain', 'need-confirmation');
 	echo "</td></tr></table></form>\n";
 	finishPortlet();
 }
@@ -9063,10 +8930,7 @@ function renderCactiServersEditor()
 		if ($server['num_graphs'])
 			printImageHREF ('i:trash', 't:Cannot delete, graphs exist');
 		else
-		{
-			echo '<a class="btn" title="delete this server" data-toggle="tooltip" href="' . makeHrefProcess (array ('op' => 'del', 'id' => $server['id'])) . '">';
-			echo getImage ('i:trash') . '</a>';
-		}
+			echo getOpLink (array ('op' => 'del', 'id' => $server['id']), '', 'i:trash', 'delete this server');
 
 		echo '</div.</td>';
 		echo '</tr></form>';
@@ -9120,8 +8984,7 @@ function renderMuninServersEditor()
 			printImageHREF ('i:trash', 't:cannot delete, graphs exist');
 		else
 		{
-			echo '<a class="btn" title="delete this server" data-toggle="tooltip" href="' . makeHrefProcess (array ('op' => 'del', 'id' => $server['id'])) . '">';
-			echo getImage ('i:trash') . '</a>';
+			echo getOpLink (array ('op' => 'del', 'id' => $server['id']), '', 'i:trash', 'delete this server');
 		}
 
 		echo '</div></td>';

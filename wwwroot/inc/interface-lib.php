@@ -945,73 +945,51 @@ function renderEntitySummary ($cell, $title, $values = array(),$width=8)
 // prepend cutting button to each of them.
 function serializeFileLinks ($links, $scissors = FALSE)
 {
+	global $etype_by_pageno, $page;
 	$comma = '';
 	$ret = '';
 	foreach ($links as $link_id => $li)
-	{
-		switch ($li['entity_type'])
+		if (FALSE === ($pageno = array_search ($li['entity_type'], $etype_by_pageno)))
+			throw new RackTablesError ("Unknown etype '${li['entity_type']}'", RackTablesError::INTERNAL);
+		else
 		{
-			case 'ipv4net':
-				$params = "page=ipv4net&id=";
-				break;
-			case 'ipv6net':
-				$params = "page=ipv6net&id=";
-				break;
-			case 'ipv4rspool':
-				$params = "page=ipv4rspool&pool_id=";
-				break;
-			case 'ipv4vs':
-				$params = "page=ipv4vs&vs_id=";
-				break;
-			case 'object':
-				$params = "page=object&object_id=";
-				break;
-			case 'rack':
-				$params = "page=rack&rack_id=";
-				break;
-			case 'location':
-				$params = "page=location&location_id=";
-				break;
-			case 'user':
-				$params = "page=user&user_id=";
-				break;
+			$ret .= $comma;
+			if ($scissors)
+				$ret .= getOpLink (array('op'=>'unlinkFile', 'link_id'=>$link_id), '', 'cut', 'Unlink file') . ' ';
+			$ret .= mkA ($li['name'], $pageno, $li['entity_id']);
+			$comma = '<br>';
 		}
-		$ret .= $comma;
-		if ($scissors)
-		{
-			$ret .= "<a class='btn' href='" . makeHrefProcess(array('op'=>'unlinkFile', 'link_id'=>$link_id)) . "'>";
-			$ret .= getImage ('i:resize-full') . '</a> ';
-		}
-		$ret .= sprintf("<a href='index.php?%s%s'>%s</a>", $params, $li['entity_id'], $li['name']);
-		$comma = '<br>';
-	}
 	return $ret;
 }
 
 
 function getOpLink ($params, $title,  $img_name = '', $comment = '', $class = '')
 {
+	$class .= ' btn'; 
 	if (isset ($params))
-		$ret = '<a class="btn" href="' . makeHrefProcess ($params) . '"';
+		$ret = '<a  href="' . makeHrefProcess ($params) . '"';
 	else
 	{
-		$ret = '<a class="btn" href="#" onclick="return false;"';
+		$ret = '<a href="#" onclick="return false;"';
 		$class .= ' noclick';
 	}
+	if (FALSE !== strpos ($class, 'need-confirmation')) {
+		addJS ('js/racktables.js');
+		$ret .= 'data-confirm="Are you really sure?"';
+	}
 	if (! empty ($comment))
-		$ret .= ' title="' . htmlspecialchars ($comment, ENT_QUOTES) . '"';
+		$ret .= ' data-toggle="tooltip" title="' . htmlspecialchars ($comment, ENT_QUOTES) . '"';
 	$class = trim ($class);
 	if (! empty ($class))
 		$ret .= ' class="' . htmlspecialchars ($class, ENT_QUOTES) . '"';
-	if (! empty ($comment))
-		$ret .= 'title="' . htmlspecialchars($comment, ENT_QUOTES) . '"';
 	$ret .= '>';
 	if (! empty ($img_name))
 	{
-		$ret .= getImage ($img_name) . '&nbsp;' . $comment;
+		$ret .= getImage ($img_name);
 		if (! empty ($title))
 			$ret .= ' ';
 	}
+
 	$ret .= $title . '</a>';
 	return $ret;
 }

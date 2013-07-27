@@ -111,7 +111,7 @@ function renderNewSLBItemForm ($realm1, $realm2)
 			$names[] = 'a ' . $realm2_data['name'];
 		$message = 'Please create ' . (implode (' and ', $names)) . '.';
 		showNotice ($message);
-		printImageHREF ('DENIED', $message, FALSE);
+		printImageHREF ('i:remove-sign', $message, FALSE);
 	}
 	echo "<tr valign=top><th class=tdright>{$realm2_data['name']}</th><td class=tdleft>";
 	printSelect ($realm2_data['list'], $realm2_data['options']);
@@ -214,9 +214,9 @@ function renderSLBTripletsEdit ($cell)
 			$del_params = $ids;
 			$del_params['op'] = 'delLB';
 			printOpFormIntro ('updLB', $ids);
-			echo "<tr valign=top class=row_${order}><td rowspan=2 class=tdright valign=middle><a href='".makeHrefProcess($del_params)."'>";
-			printImageHREF ('DELETE', 'Unconfigure');
-			echo "</a></td><td class=tdleft valign=bottom>";
+			echo "<tr valign=top class=row_${order}><td rowspan=2 class=tdright valign=middle>";
+			echo getOpLink ($del_params, '', 'i:trash', 'Unconfigure');
+			echo "</td><td class=tdleft valign=bottom>";
 			renderSLBEntityCell ($cells[0]);
 			echo "</td><td>VS config &darr;<br><textarea name=vsconfig rows=5 cols=70>" . htmlspecialchars ($slb->slb['vsconfig']) . "</textarea></td>";
 			echo '<td class=tdleft rowspan=2 valign=middle>';
@@ -370,8 +370,8 @@ function renderRSPoolServerForm ($pool_id)
 		foreach (getRSListInPool ($pool_id) as $rsid => $rs)
 		{
 			printOpFormIntro ('updRS', array ('rs_id' => $rsid));
-			echo "<tr valign=top class=row_${order}><td><a href='".makeHrefProcess(array('op'=>'delRS', 'pool_id'=>$pool_id, 'id'=>$rsid))."'>";
-			printImageHREF ('delete', 'Delete this real server');
+			echo "<tr valign=top class=row_${order}><td>";
+			echo getOpLink (array('op'=>'delRS', 'pool_id'=>$pool_id, 'id'=>$rsid), '', 'i:trash', 'Delete this real server');
 			echo "</td><td><input type=text name=rsip value='${rs['rsip']}'></td>";
 			echo "<td><input type=text name=rsport size=5 value='${rs['rsport']}'></td>";
 			echo "<td><input type=text name=comment size=15 value='${rs['comment']}'></td>";
@@ -585,7 +585,7 @@ function renderEditVService ($vsid)
 	if ($vsinfo['refcnt'] > 0)
 		echo "<button class='btn' disabled><i class='icon-trash'></i>&nbsp;Cannot delete, there are ${vsinfo['refcnt']} LB links</button>";
 	else
-		echo getOpLink (array	('op' => 'del', 'id' => $vsinfo['id']), 'Delete virtual service', 'destroy');
+		echo getOpLink (array	('op' => 'del', 'id' => $vsinfo['id']), 'Delete virtual service', 'i:trash');
 
 	echo '</div>';
 	echo "</form>\n";
