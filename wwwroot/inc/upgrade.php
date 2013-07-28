@@ -191,9 +191,30 @@ ENDOFTEXT
 
 	'0.20.5' => <<<ENDOFTEXT
 
-	This release intoduces a new configuration option:
-	DISPLAY_DENSITY.
+This release intoduces a new configuration option:
+DISPLAY_DENSITY.
 
+This release introduces the VS groups feature. VS groups is a new way to store
+and display virtual services configuration. New realm 'ipvs' (VS group) is created.
+All the existing VS configuration is kept and displayed as-is, but user is free to convert
+it to the new format, which displays it in more natural way and allows to generate
+virtual_server_group keepalived configs. To convert a virtual service to the new format,
+you need to manually create the vs group object and assign IP addresses to it. Then, if you
+have the old-style VSes configured, the Migrate tab will be displayed on the particular VS group's
+page. After successfull migration, you can remove the old-style VS objects.
+
+Old-style VS configuration becomes DEPRECATED. Its support will be removed in one of the following
+major releases. So it is strongly recommended to convert it to the new format.
+ENDOFTEXT
+,
+
+	'0.20.6' => <<<ENDOFTEXT
+0.20.6 uses database triggers for consistency measures.  The database
+user account must have the 'TRIGGER' privilege, which was introduced in
+MySQL 5.1.7.
+
+Cable paths can be traced and displayed in a graphical format. This requires
+the Image_GraphViz PEAR module (http://pear.php.net/package/Image_GraphViz).
 ENDOFTEXT
 ,
 );
@@ -252,6 +273,8 @@ function getDBUpgradePath ($v1, $v2)
 		'0.20.2',
 		'0.20.3',
 		'0.20.4',
+		'0.20.5',
+		'0.20.6',
 	);
 	if (!in_array ($v1, $versionhistory) or !in_array ($v2, $versionhistory))
 		return NULL;
@@ -1660,7 +1683,185 @@ CREATE TABLE `MuninGraph` (
 			break;
 		case '0.20.5':
 			$query[] = "INSERT INTO `Config` (varname, varvalue, vartype, emptyok, is_hidden, is_userdefined, description) VALUES ('DISPLAY_DENSITY', 'comfortable', 'string', 'no', 'no', 'yes', 'Display Density, comfortable, cozy or compact')";
+			$query[] = "
+CREATE OR REPLACE VIEW `Rack` AS SELECT O.id, O.name AS name, O.asset_no, O.has_problems, O.comment,
+  AV_H.uint_value AS height,
+  AV_S.uint_value AS sort_order,
+  RT.thumb_data,
+  R.id AS row_id,
+  R.name AS row_name,
+  L.id AS location_id,
+  L.name AS location_name
+  FROM `Object` O
+  LEFT JOIN `AttributeValue` AV_H ON O.id = AV_H.object_id AND AV_H.attr_id = 27
+  LEFT JOIN `AttributeValue` AV_S ON O.id = AV_S.object_id AND AV_S.attr_id = 29
+  LEFT JOIN `RackThumbnail` RT ON O.id = RT.rack_id
+  LEFT JOIN `EntityLink` RL ON O.id = RL.child_entity_id  AND RL.parent_entity_type = 'row' AND RL.child_entity_type = 'rack'
+  INNER JOIN `Object` R ON R.id = RL.parent_entity_id
+  LEFT JOIN `EntityLink` LL ON R.id = LL.child_entity_id AND LL.parent_entity_type = 'location' AND LL.child_entity_type = 'row'
+  LEFT JOIN `Object` L ON L.id = LL.parent_entity_id
+  WHERE O.objtype_id = 1560
+";
+
+			// prevent some AttributeMap entries from being deleted
+			$query[] = "ALTER TABLE AttributeMap ADD COLUMN sticky enum('yes','no') default 'no'";
+			$query[] = "UPDATE AttributeMap SET sticky = 'yes' WHERE objtype_id = 4 AND attr_id IN (26,28)"; // Server -> Hypervisor, Slot number
+			$query[] = "UPDATE AttributeMap SET sticky = 'yes' WHERE objtype_id = 8 AND attr_id IN (1,2,4,28)"; // Network switch -> OEM S/N 1, HW type, SW type, Slot number
+			$query[] = "UPDATE AttributeMap SET sticky = 'yes' WHERE objtype_id = 798 AND attr_id = 28"; // Network security -> Slot number
+			$query[] = "UPDATE AttributeMap SET sticky = 'yes' WHERE objtype_id = 1055 AND attr_id = 28"; // FC switch -> Slot number
+			$query[] = "UPDATE AttributeMap SET sticky = 'yes' WHERE objtype_id = 1560 AND attr_id IN (27,29)"; // Rack -> Height, Sort order
+			$query[] = "UPDATE AttributeMap SET sticky = 'yes' WHERE objtype_id = 1787 AND attr_id = 30"; // Management interface -> Mgmt type
+
 			$query[] = "INSERT INTO `Config` (varname, varvalue, vartype, emptyok, is_hidden, is_userdefined, description) VALUES ('RDP_OBJS_LISTSRC','false','string','yes','no','yes','Rackcode filter for RDP-managed objects')";
+
+			// SLB v2 tables
+			$query[] = "
+CREATE TABLE `VS` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `name` char(255) DEFAULT NULL,
+  `vsconfig` text,
+  `rsconfig` text,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB
+";
+			$query[] = "
+CREATE TABLE `VSIPs` (
+  `vs_id` int(10) unsigned NOT NULL,
+  `vip` varbinary(16) NOT NULL,
+  `vsconfig` text,
+  `rsconfig` text,
+  PRIMARY KEY (`vs_id`,`vip`),
+  KEY `vip` (`vip`),
+  CONSTRAINT `VSIPs-vs_id` FOREIGN KEY (`vs_id`) REFERENCES `VS` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB
+";
+			$query[] = "
+CREATE TABLE `VSPorts` (
+  `vs_id` int(10) unsigned NOT NULL,
+  `proto` enum('TCP','UDP','MARK') NOT NULL,
+  `vport` int(10) unsigned NOT NULL,
+  `vsconfig` text,
+  `rsconfig` text,
+  PRIMARY KEY (`vs_id`,`proto`,`vport`),
+  KEY `proto-vport` (`proto`,`vport`),
+  CONSTRAINT `VS-vs_id` FOREIGN KEY (`vs_id`) REFERENCES `VS` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB
+";
+			$query[] = "
+CREATE TABLE `VSEnabledIPs` (
+  `object_id` int(10) unsigned NOT NULL,
+  `vs_id` int(10) unsigned NOT NULL,
+  `vip` varbinary(16) NOT NULL,
+  `rspool_id` int(10) unsigned NOT NULL,
+  `prio` varchar(255) DEFAULT NULL,
+  `vsconfig` text,
+  `rsconfig` text,
+  PRIMARY KEY (`object_id`,`vs_id`,`vip`,`rspool_id`),
+  KEY `vip` (`vip`),
+  KEY `VSEnabledIPs-FK-vs_id-vip` (`vs_id`,`vip`),
+  KEY `VSEnabledIPs-FK-rspool_id` (`rspool_id`),
+  CONSTRAINT `VSEnabledIPs-FK-rspool_id` FOREIGN KEY (`rspool_id`) REFERENCES `IPv4RSPool` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `VSEnabledIPs-FK-vs_id-vip` FOREIGN KEY (`vs_id`, `vip`) REFERENCES `VSIPs` (`vs_id`, `vip`) ON DELETE CASCADE
+) ENGINE=InnoDB
+";
+			$query[] = "
+CREATE TABLE `VSEnabledPorts` (
+  `object_id` int(10) unsigned NOT NULL,
+  `vs_id` int(10) unsigned NOT NULL,
+  `proto` enum('TCP','UDP','MARK') NOT NULL,
+  `vport` int(10) unsigned NOT NULL,
+  `rspool_id` int(10) unsigned NOT NULL,
+  `vsconfig` text,
+  `rsconfig` text,
+  PRIMARY KEY (`object_id`,`vs_id`,`proto`,`vport`,`rspool_id`),
+  KEY `VSEnabledPorts-FK-vs_id-proto-vport` (`vs_id`,`proto`,`vport`),
+  KEY `VSEnabledPorts-FK-rspool_id` (`rspool_id`),
+  CONSTRAINT `VSEnabledPorts-FK-object_id` FOREIGN KEY (`object_id`) REFERENCES `Object` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `VSEnabledPorts-FK-rspool_id` FOREIGN KEY (`rspool_id`) REFERENCES `IPv4RSPool` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `VSEnabledPorts-FK-vs_id-proto-vport` FOREIGN KEY (`vs_id`, `proto`, `vport`) REFERENCES `VSPorts` (`vs_id`, `proto`, `vport`) ON DELETE CASCADE
+) ENGINE=InnoDB
+";
+			$query[] = "ALTER TABLE `EntityLink` MODIFY COLUMN `parent_entity_type` ENUM('ipv4net','ipv4rspool','ipv4vs','ipv6net','location','object','rack','row','user') NOT NULL";
+			$query[] = "ALTER TABLE `FileLink` MODIFY COLUMN `entity_type` ENUM('ipv4net','ipv4rspool','ipv4vs','ipv6net','location','object','rack','row','user') NOT NULL DEFAULT 'object'";
+			$query[] = "ALTER TABLE `TagStorage` MODIFY COLUMN `entity_realm` ENUM('file','ipv4net','ipv4rspool','ipv4vs','ipvs','ipv6net','location','object','rack','user','vst') NOT NULL DEFAULT 'object'";
+			$query[] = "ALTER TABLE `UserConfig` DROP FOREIGN KEY `UserConfig-FK-user`";
+			$query[] = "UPDATE Config SET varvalue = '0.20.5' WHERE varname = 'DB_VERSION'";
+			break;
+		case '0.20.6':
+			if (!isInnoDBSupported ())
+			{
+				showUpgradeError ("Cannot upgrade because triggers are not supported by your MySQL server.", __FUNCTION__);
+				die;
+			}
+			// allow one-to-many port links
+			$query[] = "ALTER TABLE `Link` DROP FOREIGN KEY `Link-FK-a`, DROP FOREIGN KEY `Link-FK-b`";
+			$query[] = "ALTER TABLE `Link` DROP PRIMARY KEY, DROP KEY `porta`, DROP KEY `portb`";
+			$query[] = "ALTER TABLE `Link` ADD UNIQUE KEY `porta-portb-unique` (`porta`,`portb`), ADD KEY `porta` (`porta`), ADD KEY `portb` (`portb`)";
+			$query[] = "ALTER TABLE `Link` ADD CONSTRAINT `Link-FK-a` FOREIGN KEY (`porta`) REFERENCES `Port` (`id`) ON DELETE CASCADE, ADD CONSTRAINT `Link-FK-b` FOREIGN KEY (`portb`) REFERENCES `Port` (`id`) ON DELETE CASCADE";
+			$query[] = "ALTER TABLE `Link` ADD COLUMN `id` int(10) unsigned NOT NULL PRIMARY KEY AUTO_INCREMENT FIRST";
+			$query[] = "
+CREATE TRIGGER `checkLinkBeforeInsert` BEFORE INSERT ON `Link`
+  FOR EACH ROW
+BEGIN
+  DECLARE tmp, porta_type, portb_type, count INTEGER;
+  IF NEW.porta = NEW.portb THEN
+    SET NEW.porta = NULL;
+  ELSEIF NEW.porta > NEW.portb THEN
+    SET tmp = NEW.porta;
+    SET NEW.porta = NEW.portb;
+    SET NEW.portb = tmp;
+  END IF; 
+  SELECT type INTO porta_type FROM Port WHERE id = NEW.porta;
+  SELECT type INTO portb_type FROM Port WHERE id = NEW.portb;
+  SELECT COUNT(*) INTO count FROM PortCompat WHERE (type1 = porta_type AND type2 = portb_type) OR (type1 = portb_type AND type2 = porta_type);
+  IF count = 0 THEN
+    SET NEW.porta = NULL;
+  END IF;
+END;
+";
+			$query[] = "
+CREATE TRIGGER `checkLinkBeforeUpdate` BEFORE UPDATE ON `Link`
+  FOR EACH ROW
+BEGIN
+  DECLARE tmp, porta_type, portb_type, count INTEGER;
+  IF NEW.porta = NEW.portb THEN
+    SET NEW.porta = NULL;
+  ELSEIF NEW.porta > NEW.portb THEN
+    SET tmp = NEW.porta;
+    SET NEW.porta = NEW.portb;
+    SET NEW.portb = tmp;
+  END IF; 
+  SELECT type INTO porta_type FROM Port WHERE id = NEW.porta;
+  SELECT type INTO portb_type FROM Port WHERE id = NEW.portb;
+  SELECT COUNT(*) INTO count FROM PortCompat WHERE (type1 = porta_type AND type2 = portb_type) OR (type1 = portb_type AND type2 = porta_type);
+  IF count = 0 THEN
+    SET NEW.porta = NULL;
+  END IF;
+END;
+";
+			$query[] = "
+CREATE TRIGGER `checkPortCompatBeforeDelete` BEFORE DELETE ON `PortCompat`
+  FOR EACH ROW
+BEGIN
+  DECLARE count INTEGER;
+  SELECT COUNT(*) INTO count FROM Link LEFT JOIN Port AS PortA ON Link.porta = PortA.id LEFT JOIN Port AS PortB ON Link.portb = PortB.id WHERE (PortA.type = OLD.type1 AND PortB.type = OLD.type2) OR (PortA.type = OLD.type2 AND PortB.type = OLD.type1);
+  IF count > 0 THEN
+    UPDATE `Cannot delete: rule still used` SET x = 1;
+  END IF;
+END;
+";
+			$query[] = "
+CREATE TRIGGER `checkPortCompatBeforeUpdate` BEFORE UPDATE ON `PortCompat`
+  FOR EACH ROW
+BEGIN
+  DECLARE count INTEGER;
+  SELECT COUNT(*) INTO count FROM Link LEFT JOIN Port AS PortA ON Link.porta = PortA.id LEFT JOIN Port AS PortB ON Link.portb = PortB.id WHERE (PortA.type = OLD.type1 AND PortB.type = OLD.type2) OR (PortA.type = OLD.type2 AND PortB.type = OLD.type1);
+  IF count > 0 THEN
+    UPDATE `Cannot update: rule still used` SET x = 1;
+  END IF;
+END;
+";
+			$query[] = "UPDATE Config SET varvalue = '0.20.6' WHERE varname = 'DB_VERSION'";
 			break;
 		case 'dictionary':
 			$query = reloadDictionary();

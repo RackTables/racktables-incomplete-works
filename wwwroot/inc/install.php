@@ -284,6 +284,7 @@ function init_config ()
 #	'sp_profile' => 'default-sp',
 #	'usernameAttribute' => 'eduPersonPrincipName',
 #	'fullnameAttribute' => 'fullName',
+#	'groupListAttribute' => 'memberOf',
 #);
 
 # This HTML banner is intended to assist users in dispatching their issues
@@ -455,6 +456,7 @@ CREATE TABLE `AttributeMap` (
   `objtype_id` int(10) unsigned NOT NULL default '1',
   `attr_id` int(10) unsigned NOT NULL default '1',
   `chapter_id` int(10) unsigned default NULL,
+  `sticky` enum('yes','no') default 'no',
   UNIQUE KEY `objtype_id` (`objtype_id`,`attr_id`),
   KEY `attr_id` (`attr_id`),
   KEY `chapter_id` (`chapter_id`),
@@ -558,7 +560,7 @@ CREATE TABLE `Dictionary` (
 
 CREATE TABLE `EntityLink` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `parent_entity_type` enum('ipv4net','ipv4rspool','ipv4vs','ipv6net','location','object','rack','row','user') NOT NULL,
+  `parent_entity_type` enum('ipv4net','ipv4rspool','ipv4vs','ipvs','ipv6net','location','object','rack','row','user') NOT NULL,
   `parent_entity_id` int(10) unsigned NOT NULL,
   `child_entity_type` enum('file','location','object','rack','row') NOT NULL,
   `child_entity_id` int(10) unsigned NOT NULL,
@@ -585,7 +587,7 @@ CREATE TABLE `File` (
 CREATE TABLE `FileLink` (
   `id` int(10) unsigned NOT NULL auto_increment,
   `file_id` int(10) unsigned NOT NULL,
-  `entity_type` enum('ipv4net','ipv4rspool','ipv4vs','ipv6net','location','object','rack','row','user') NOT NULL default 'object',
+  `entity_type` enum('ipv4net','ipv4rspool','ipv4vs','ipvs','ipv6net','location','object','rack','row','user') NOT NULL default 'object',
   `entity_id` int(10) NOT NULL,
   PRIMARY KEY  (`id`),
   KEY `FileLink-file_id` (`file_id`),
@@ -746,12 +748,14 @@ CREATE TABLE `LDAPCache` (
 ) ENGINE=InnoDB;
 
 CREATE TABLE `Link` (
+  `id` int(10) unsigned NOT NULL auto_increment,
   `porta` int(10) unsigned NOT NULL default '0',
   `portb` int(10) unsigned NOT NULL default '0',
   `cable` char(64) DEFAULT NULL,
-  PRIMARY KEY  (`porta`,`portb`),
-  UNIQUE KEY `porta` (`porta`),
-  UNIQUE KEY `portb` (`portb`),
+  PRIMARY KEY  (`id`),
+  UNIQUE KEY `porta-portb-unique` (`porta`,`portb`),
+  KEY `porta` (`porta`),
+  KEY `portb` (`portb`),
   CONSTRAINT `Link-FK-a` FOREIGN KEY (`porta`) REFERENCES `Port` (`id`) ON DELETE CASCADE,
   CONSTRAINT `Link-FK-b` FOREIGN KEY (`portb`) REFERENCES `Port` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB;
@@ -944,7 +948,7 @@ CREATE TABLE `Script` (
 ) ENGINE=InnoDB;
 
 CREATE TABLE `TagStorage` (
-  `entity_realm` enum('file','ipv4net','ipv4rspool','ipv4vs','ipv6net','location','object','rack','user','vst') NOT NULL default 'object',
+  `entity_realm` enum('file','ipv4net','ipv4rspool','ipv4vs','ipvs','ipv6net','location','object','rack','user','vst') NOT NULL default 'object',
   `entity_id` int(10) unsigned NOT NULL,
   `tag_id` int(10) unsigned NOT NULL default '0',
   `tag_is_assignable` enum('yes','no') NOT NULL DEFAULT 'yes',
@@ -984,8 +988,7 @@ CREATE TABLE `UserConfig` (
   `user` char(64) NOT NULL,
   UNIQUE KEY `user_varname` (`user`,`varname`),
   KEY `varname` (`varname`),
-  CONSTRAINT `UserConfig-FK-varname` FOREIGN KEY (`varname`) REFERENCES `Config` (`varname`) ON DELETE CASCADE,
-  CONSTRAINT `UserConfig-FK-user` FOREIGN KEY (`user`) REFERENCES `UserAccount` (`user_name`) ON DELETE CASCADE
+  CONSTRAINT `UserConfig-FK-varname` FOREIGN KEY (`varname`) REFERENCES `Config` (`varname`) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 CREATE TABLE `VLANDescription` (
@@ -1072,6 +1075,127 @@ CREATE TABLE `VLANValidID` (
   PRIMARY KEY  (`vlan_id`)
 ) ENGINE=InnoDB;
 
+CREATE TABLE `VS` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `name` char(255) DEFAULT NULL,
+  `vsconfig` text,
+  `rsconfig` text,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB;
+
+CREATE TABLE `VSIPs` (
+  `vs_id` int(10) unsigned NOT NULL,
+  `vip` varbinary(16) NOT NULL,
+  `vsconfig` text,
+  `rsconfig` text,
+  PRIMARY KEY (`vs_id`,`vip`),
+  KEY `vip` (`vip`),
+  CONSTRAINT `VSIPs-vs_id` FOREIGN KEY (`vs_id`) REFERENCES `VS` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE `VSPorts` (
+  `vs_id` int(10) unsigned NOT NULL,
+  `proto` enum('TCP','UDP','MARK') NOT NULL,
+  `vport` int(10) unsigned NOT NULL,
+  `vsconfig` text,
+  `rsconfig` text,
+  PRIMARY KEY (`vs_id`,`proto`,`vport`),
+  KEY `proto-vport` (`proto`,`vport`),
+  CONSTRAINT `VS-vs_id` FOREIGN KEY (`vs_id`) REFERENCES `VS` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE `VSEnabledIPs` (
+  `object_id` int(10) unsigned NOT NULL,
+  `vs_id` int(10) unsigned NOT NULL,
+  `vip` varbinary(16) NOT NULL,
+  `rspool_id` int(10) unsigned NOT NULL,
+  `prio` varchar(255) DEFAULT NULL,
+  `vsconfig` text,
+  `rsconfig` text,
+  PRIMARY KEY (`object_id`,`vs_id`,`vip`,`rspool_id`),
+  KEY `vip` (`vip`),
+  KEY `VSEnabledIPs-FK-vs_id-vip` (`vs_id`,`vip`),
+  KEY `VSEnabledIPs-FK-rspool_id` (`rspool_id`),
+  CONSTRAINT `VSEnabledIPs-FK-rspool_id` FOREIGN KEY (`rspool_id`) REFERENCES `IPv4RSPool` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `VSEnabledIPs-FK-vs_id-vip` FOREIGN KEY (`vs_id`, `vip`) REFERENCES `VSIPs` (`vs_id`, `vip`) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE `VSEnabledPorts` (
+  `object_id` int(10) unsigned NOT NULL,
+  `vs_id` int(10) unsigned NOT NULL,
+  `proto` enum('TCP','UDP','MARK') NOT NULL,
+  `vport` int(10) unsigned NOT NULL,
+  `rspool_id` int(10) unsigned NOT NULL,
+  `vsconfig` text,
+  `rsconfig` text,
+  PRIMARY KEY (`object_id`,`vs_id`,`proto`,`vport`,`rspool_id`),
+  KEY `VSEnabledPorts-FK-vs_id-proto-vport` (`vs_id`,`proto`,`vport`),
+  KEY `VSEnabledPorts-FK-rspool_id` (`rspool_id`),
+  CONSTRAINT `VSEnabledPorts-FK-object_id` FOREIGN KEY (`object_id`) REFERENCES `Object` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `VSEnabledPorts-FK-rspool_id` FOREIGN KEY (`rspool_id`) REFERENCES `IPv4RSPool` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `VSEnabledPorts-FK-vs_id-proto-vport` FOREIGN KEY (`vs_id`, `proto`, `vport`) REFERENCES `VSPorts` (`vs_id`, `proto`, `vport`) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+DELIMITER ;;
+CREATE TRIGGER `checkLinkBeforeInsert` BEFORE INSERT ON `Link`
+  FOR EACH ROW
+BEGIN
+  DECLARE tmp, porta_type, portb_type, count INTEGER;
+  IF NEW.porta = NEW.portb THEN
+    SET NEW.porta = NULL;
+  ELSEIF NEW.porta > NEW.portb THEN
+    SET tmp = NEW.porta;
+    SET NEW.porta = NEW.portb;
+    SET NEW.portb = tmp;
+  END IF; 
+  SELECT type INTO porta_type FROM Port WHERE id = NEW.porta;
+  SELECT type INTO portb_type FROM Port WHERE id = NEW.portb;
+  SELECT COUNT(*) INTO count FROM PortCompat WHERE (type1 = porta_type AND type2 = portb_type) OR (type1 = portb_type AND type2 = porta_type);
+  IF count = 0 THEN
+    SET NEW.porta = NULL;
+  END IF;
+END;;
+
+CREATE TRIGGER `checkLinkBeforeUpdate` BEFORE UPDATE ON `Link`
+  FOR EACH ROW
+BEGIN
+  DECLARE tmp, porta_type, portb_type, count INTEGER;
+  IF NEW.porta = NEW.portb THEN
+    SET NEW.porta = NULL;
+  ELSEIF NEW.porta > NEW.portb THEN
+    SET tmp = NEW.porta;
+    SET NEW.porta = NEW.portb;
+    SET NEW.portb = tmp;
+  END IF; 
+  SELECT type INTO porta_type FROM Port WHERE id = NEW.porta;
+  SELECT type INTO portb_type FROM Port WHERE id = NEW.portb;
+  SELECT COUNT(*) INTO count FROM PortCompat WHERE (type1 = porta_type AND type2 = portb_type) OR (type1 = portb_type AND type2 = porta_type);
+  IF count = 0 THEN
+    SET NEW.porta = NULL;
+  END IF;
+END;;
+
+CREATE TRIGGER `checkPortCompatBeforeDelete` BEFORE DELETE ON `PortCompat`
+  FOR EACH ROW
+BEGIN
+  DECLARE count INTEGER;
+  SELECT COUNT(*) INTO count FROM Link LEFT JOIN Port AS PortA ON Link.porta = PortA.id LEFT JOIN Port AS PortB ON Link.portb = PortB.id WHERE (PortA.type = OLD.type1 AND PortB.type = OLD.type2) OR (PortA.type = OLD.type2 AND PortB.type = OLD.type1);
+  IF count > 0 THEN
+    UPDATE `Cannot delete: rule still used` SET x = 1;
+  END IF;
+END;;
+
+CREATE TRIGGER `checkPortCompatBeforeUpdate` BEFORE UPDATE ON `PortCompat`
+  FOR EACH ROW
+BEGIN
+  DECLARE count INTEGER;
+  SELECT COUNT(*) INTO count FROM Link LEFT JOIN Port AS PortA ON Link.porta = PortA.id LEFT JOIN Port AS PortB ON Link.portb = PortB.id WHERE (PortA.type = OLD.type1 AND PortB.type = OLD.type2) OR (PortA.type = OLD.type2 AND PortB.type = OLD.type1);
+  IF count > 0 THEN
+    UPDATE `Cannot update: rule still used` SET x = 1;
+  END IF;
+END;;
+DELIMITER ;
+
 CREATE VIEW `Location` AS SELECT O.id, O.name, O.has_problems, O.comment, P.id AS parent_id, P.name AS parent_name
 FROM `Object` O
 LEFT JOIN (
@@ -1091,13 +1215,17 @@ CREATE VIEW `Rack` AS SELECT O.id, O.name AS name, O.asset_no, O.has_problems, O
   AV_S.uint_value AS sort_order,
   RT.thumb_data,
   R.id AS row_id,
-  R.name AS row_name
+  R.name AS row_name,
+  L.id AS location_id,
+  L.name AS location_name
   FROM `Object` O
   LEFT JOIN `AttributeValue` AV_H ON O.id = AV_H.object_id AND AV_H.attr_id = 27
   LEFT JOIN `AttributeValue` AV_S ON O.id = AV_S.object_id AND AV_S.attr_id = 29
   LEFT JOIN `RackThumbnail` RT ON O.id = RT.rack_id
-  LEFT JOIN `EntityLink` EL ON O.id = EL.child_entity_id  AND EL.parent_entity_type = 'row' AND EL.child_entity_type = 'rack'
-  INNER JOIN `Object` R ON R.id = EL.parent_entity_id
+  LEFT JOIN `EntityLink` RL ON O.id = RL.child_entity_id  AND RL.parent_entity_type = 'row' AND RL.child_entity_type = 'rack'
+  INNER JOIN `Object` R ON R.id = RL.parent_entity_id
+  LEFT JOIN `EntityLink` LL ON R.id = LL.child_entity_id AND LL.parent_entity_type = 'location' AND LL.child_entity_type = 'row'
+  LEFT JOIN `Object` L ON L.id = LL.parent_entity_id
   WHERE O.objtype_id = 1560;
 
 CREATE VIEW `RackObject` AS SELECT id, name, label, objtype_id, asset_no, has_problems, comment FROM `Object`
@@ -1170,152 +1298,152 @@ INSERT INTO `Chapter` (`id`, `sticky`, `name`) VALUES
 -- Default chapters must have ID less than 10000, add them above this line.
 (9999,'no','multiplexer models');
 
-INSERT INTO `AttributeMap` (`objtype_id`, `attr_id`, `chapter_id`) VALUES
-(2,1,NULL),
-(2,2,27),
-(2,3,NULL),
-(2,5,NULL),
-(4,1,NULL),
-(4,2,11),
-(4,3,NULL),
-(4,4,13),
-(4,14,NULL),
-(4,21,NULL),
-(4,22,NULL),
-(4,24,NULL),
-(4,25,NULL),
-(4,26,29),
-(4,28,NULL),
-(5,1,NULL),
-(5,2,18),
-(6,1,NULL),
-(6,2,19),
-(6,20,NULL),
-(7,1,NULL),
-(7,2,17),
-(7,3,NULL),
-(7,4,16),
-(7,5,NULL),
-(7,14,NULL),
-(7,16,NULL),
-(7,17,NULL),
-(7,18,NULL),
-(7,21,NULL),
-(7,22,NULL),
-(7,24,NULL),
-(8,1,NULL),
-(8,2,12),
-(8,3,NULL),
-(8,4,14),
-(8,5,NULL),
-(8,14,NULL),
-(8,16,NULL),
-(8,17,NULL),
-(8,18,NULL),
-(8,20,NULL),
-(8,21,NULL),
-(8,22,NULL),
-(8,24,NULL),
-(8,28,NULL),
-(9,6,NULL),
-(12,1,NULL),
-(12,3,NULL),
-(12,7,NULL),
-(12,8,NULL),
-(12,13,NULL),
-(12,20,NULL),
-(445,1,NULL),
-(445,2,21),
-(445,3,NULL),
-(445,5,NULL),
-(445,14,NULL),
-(445,22,NULL),
-(447,1,NULL),
-(447,2,9999),
-(447,3,NULL),
-(447,5,NULL),
-(447,14,NULL),
-(447,22,NULL),
-(15,2,23),
-(798,1,NULL),
-(798,2,24),
-(798,3,NULL),
-(798,5,NULL),
-(798,14,NULL),
-(798,16,NULL),
-(798,17,NULL),
-(798,18,NULL),
-(798,20,NULL),
-(798,21,NULL),
-(798,22,NULL),
-(798,24,NULL),
-(798,28,NULL),
-(965,1,NULL),
-(965,3,NULL),
-(965,2,25),
-(965,4,37),
-(1055,2,26),
-(1055,28,NULL),
-(1323,1,NULL),
-(1323,2,28),
-(1323,3,NULL),
-(1323,5,NULL),
-(1397,1,NULL),
-(1397,2,34),
-(1397,14,NULL),
-(1397,21,NULL),
-(1397,22,NULL),
-(1398,1,NULL),
-(1398,2,35),
-(1398,14,NULL),
-(1398,21,NULL),
-(1398,22,NULL),
-(1502,1,NULL),
-(1502,2,31),
-(1502,3,NULL),
-(1502,14,NULL),
-(1502,20,NULL),
-(1502,21,NULL),
-(1502,22,NULL),
-(1503,1,NULL),
-(1503,2,30),
-(1503,3,NULL),
-(1503,4,14),
-(1503,5,NULL),
-(1503,14,NULL),
-(1503,16,NULL),
-(1503,17,NULL),
-(1503,18,NULL),
-(1503,20,NULL),
-(1503,21,NULL),
-(1503,22,NULL),
-(1503,24,NULL),
-(1504,3,NULL),
-(1504,4,13),
-(1504,14,NULL),
-(1504,24,NULL),
-(1505,14,NULL),
-(1506,14,NULL),
-(1506,17,NULL),
-(1506,18,NULL),
-(1507,1,NULL),
-(1507,2,32),
-(1507,3,NULL),
-(1507,4,33),
-(1507,5,NULL),
-(1507,14,NULL),
-(1507,20,NULL),
-(1507,21,NULL),
-(1507,22,NULL),
-(1560,27,NULL),
-(1560,29,NULL),
-(1562,14,NULL),
-(1644, 1, NULL),
-(1644, 2, 36),
-(1644, 3, NULL),
-(1787,3,NULL),
-(1787,14,NULL),
-(1787,30,38);
+INSERT INTO `AttributeMap` (`objtype_id`, `attr_id`, `chapter_id`, `sticky`) VALUES
+(2,1,NULL,'no'),
+(2,2,27,'no'),
+(2,3,NULL,'no'),
+(2,5,NULL,'no'),
+(4,1,NULL,'no'),
+(4,2,11,'no'),
+(4,3,NULL,'no'),
+(4,4,13,'no'),
+(4,14,NULL,'no'),
+(4,21,NULL,'no'),
+(4,22,NULL,'no'),
+(4,24,NULL,'no'),
+(4,25,NULL,'no'),
+(4,26,29,'yes'),
+(4,28,NULL,'yes'),
+(5,1,NULL,'no'),
+(5,2,18,'no'),
+(6,1,NULL,'no'),
+(6,2,19,'no'),
+(6,20,NULL,'no'),
+(7,1,NULL,'no'),
+(7,2,17,'no'),
+(7,3,NULL,'no'),
+(7,4,16,'no'),
+(7,5,NULL,'no'),
+(7,14,NULL,'no'),
+(7,16,NULL,'no'),
+(7,17,NULL,'no'),
+(7,18,NULL,'no'),
+(7,21,NULL,'no'),
+(7,22,NULL,'no'),
+(7,24,NULL,'no'),
+(8,1,NULL,'yes'),
+(8,2,12,'yes'),
+(8,3,NULL,'no'),
+(8,4,14,'yes'),
+(8,5,NULL,'no'),
+(8,14,NULL,'no'),
+(8,16,NULL,'no'),
+(8,17,NULL,'no'),
+(8,18,NULL,'no'),
+(8,20,NULL,'no'),
+(8,21,NULL,'no'),
+(8,22,NULL,'no'),
+(8,24,NULL,'no'),
+(8,28,NULL,'yes'),
+(9,6,NULL,'no'),
+(12,1,NULL,'no'),
+(12,3,NULL,'no'),
+(12,7,NULL,'no'),
+(12,8,NULL,'no'),
+(12,13,NULL,'no'),
+(12,20,NULL,'no'),
+(15,2,23,'no'),
+(445,1,NULL,'no'),
+(445,2,21,'no'),
+(445,3,NULL,'no'),
+(445,5,NULL,'no'),
+(445,14,NULL,'no'),
+(445,22,NULL,'no'),
+(447,1,NULL,'no'),
+(447,2,9999,'no'),
+(447,3,NULL,'no'),
+(447,5,NULL,'no'),
+(447,14,NULL,'no'),
+(447,22,NULL,'no'),
+(798,1,NULL,'no'),
+(798,2,24,'no'),
+(798,3,NULL,'no'),
+(798,5,NULL,'no'),
+(798,14,NULL,'no'),
+(798,16,NULL,'no'),
+(798,17,NULL,'no'),
+(798,18,NULL,'no'),
+(798,20,NULL,'no'),
+(798,21,NULL,'no'),
+(798,22,NULL,'no'),
+(798,24,NULL,'no'),
+(798,28,NULL,'yes'),
+(965,1,NULL,'no'),
+(965,2,25,'no'),
+(965,3,NULL,'no'),
+(965,4,37,'no'),
+(1055,2,26,'no'),
+(1055,28,NULL,'yes'),
+(1323,1,NULL,'no'),
+(1323,2,28,'no'),
+(1323,3,NULL,'no'),
+(1323,5,NULL,'no'),
+(1397,1,NULL,'no'),
+(1397,2,34,'no'),
+(1397,14,NULL,'no'),
+(1397,21,NULL,'no'),
+(1397,22,NULL,'no'),
+(1398,1,NULL,'no'),
+(1398,2,35,'no'),
+(1398,14,NULL,'no'),
+(1398,21,NULL,'no'),
+(1398,22,NULL,'no'),
+(1502,1,NULL,'no'),
+(1502,2,31,'no'),
+(1502,3,NULL,'no'),
+(1502,14,NULL,'no'),
+(1502,20,NULL,'no'),
+(1502,21,NULL,'no'),
+(1502,22,NULL,'no'),
+(1503,1,NULL,'no'),
+(1503,2,30,'no'),
+(1503,3,NULL,'no'),
+(1503,4,14,'no'),
+(1503,5,NULL,'no'),
+(1503,14,NULL,'no'),
+(1503,16,NULL,'no'),
+(1503,17,NULL,'no'),
+(1503,18,NULL,'no'),
+(1503,20,NULL,'no'),
+(1503,21,NULL,'no'),
+(1503,22,NULL,'no'),
+(1503,24,NULL,'no'),
+(1504,3,NULL,'no'),
+(1504,4,13,'no'),
+(1504,14,NULL,'no'),
+(1504,24,NULL,'no'),
+(1505,14,NULL,'no'),
+(1506,14,NULL,'no'),
+(1506,17,NULL,'no'),
+(1506,18,NULL,'no'),
+(1507,1,NULL,'no'),
+(1507,2,32,'no'),
+(1507,3,NULL,'no'),
+(1507,4,33,'no'),
+(1507,5,NULL,'no'),
+(1507,14,NULL,'no'),
+(1507,20,NULL,'no'),
+(1507,21,NULL,'no'),
+(1507,22,NULL,'no'),
+(1560,27,NULL,'yes'),
+(1560,29,NULL,'yes'),
+(1562,14,NULL,'no'),
+(1644,1,NULL,'no'),
+(1644,2,36,'no'),
+(1644,3,NULL,'no'),
+(1787,3,NULL,'no'),
+(1787,14,NULL,'no'),
+(1787,30,38,'yes');
 
 INSERT INTO `PortInnerInterface` VALUES
 (1,'hardwired'),

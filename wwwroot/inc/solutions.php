@@ -13,6 +13,8 @@ amount of other code (which should eventually be placed in a sort of
 
 */
 
+require_once 'slb-interface.php';
+
 define ('RE_STATIC_URI', '#^([[:alpha:]]+)/(?:[[:alpha:]]+/)*[[:alnum:]\._-]+\.([[:alpha:]]+)$#');
 
 function dispatchImageRequest()
@@ -138,7 +140,6 @@ function printRackThumbImage ($rack_id, $scale = 1)
 {
 	$rackData = spotEntity ('rack', $rack_id);
 	amplifyCell ($rackData);
-	markupObjectProblems ($rackData);
 	global $rtwidth;
 	$offset[0] = 3;
 	$offset[1] = 3 + $rtwidth[0];
