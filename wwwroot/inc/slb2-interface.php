@@ -62,7 +62,7 @@ function renderVS ($vsid)
 	echo '</td>';
 
 	echo '<td class=pcright>';
-	renderSLBTriplets2 ($vsinfo);
+	renderSLBTriplets2 ($vsinfo,false,null,8);
 	echo '</td></tr><tr><td colspan=2>';
 	renderFilesPortlet ('ipvs', $vsid);
 	echo '</tr><table>';
@@ -214,7 +214,7 @@ function renderEditVS ($vs_id)
 }
 
 // supports object, ipvs, ipv4rspool cell types
-function renderSLBTriplets2 ($cell, $editable = FALSE, $hl_ip = NULL)
+function renderSLBTriplets2 ($cell, $editable = FALSE, $hl_ip = NULL,$width=12)
 {
 	list ($realm1, $realm2) = array_values (array_diff (array ('object', 'ipvs', 'ipv4rspool'), array ($cell['realm'])));
 	if ($editable && getConfigVar ('ADDNEW_AT_TOP') == 'yes')
@@ -239,14 +239,14 @@ function renderSLBTriplets2 ($cell, $editable = FALSE, $hl_ip = NULL)
 	// render table header
 	if (count ($triplets))
 	{
-		startPortlet ('VS group instances (' . count ($triplets) . ')');
-		echo "<table cellspacing=0 cellpadding=5 align=center class=widetable><tr><th></th>";
+		startPortlet ('VS group instances',$width,'', count ($triplets));
+		echo "<table class='table table-striped'><thead><tr><th></th>";
 		foreach ($headers as $realm => $header)
 			if ($realm != $cell['realm'])
 				echo "<th>$header</th>";
 		echo '<th>Ports</th>';
 		echo '<th>VIPs</th>';
-		echo "</tr>";
+		echo "</tr></thead>";
 	}
 
 	addJS ('js/slb_editor.js');
@@ -264,12 +264,11 @@ function renderSLBTriplets2 ($cell, $editable = FALSE, $hl_ip = NULL)
 		$vs_cell = spotEntity ('ipvs', $slb['vs_id']);
 		amplifyCell ($vs_cell);
 		echo "<tr valign=top class='row_${order} triplet-row'>";
-		echo '<td><a href="#" onclick="' . "slb_config_preview(event, ${slb['object_id']}, ${slb['vs_id']}, ${slb['rspool_id']}); return false" . '">' . getImageHREF ('Zoom', 'config preview') . '</a></td>';
 		foreach (array_keys ($headers) as $realm)
 		{
 			if ($realm == $cell['realm'])
 				continue;
-			echo "<td class=tdleft>";
+			echo "<td>";
 			$slb_cell = spotEntity ($realm, $slb[$fields[$realm]]);
 			renderSLBEntityCell ($slb_cell);
 			echo "</td>";
@@ -316,7 +315,10 @@ function renderSLBTriplets2 ($cell, $editable = FALSE, $hl_ip = NULL)
 				'vs_id' => $slb['vs_id'],
 				'rspool_id' => $slb['rspool_id'],
 			));
-			printImageHREF ('DELETE', 'Remove triplet', TRUE);
+			echo '<div class="btn-group">';
+			printImageHREF ('i:trash', 't:Remove triplet', TRUE);
+			echo '<a class="btn" data-toggle="tooltip" title="config preview" href="#" onclick="' . "slb_config_preview(event, ${slb['object_id']}, ${slb['vs_id']}, ${slb['rspool_id']}); return false" . '">' . getImage ('i:search') . '</a></div>';
+
 			echo '</form></td>';
 		}
 
@@ -434,7 +436,7 @@ function renderNewTripletForm ($realm1, $realm2)
 
 	$realm1_data = get_realm_data ($realm1);
 	$realm2_data = get_realm_data ($realm2);
-	startPortlet ('Add new VS group');
+	startPortlet ('Add new VS group',12);
 	if (count ($realm1_data['list']) && count ($realm2_data['list']))
 		printOpFormIntro ('addLink');
 	echo "<table cellspacing=0 cellpadding=5 align=center>";

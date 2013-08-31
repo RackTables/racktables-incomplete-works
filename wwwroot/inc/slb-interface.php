@@ -39,11 +39,10 @@ function renderSLBEntityCell ($cell, $highlighted = FALSE)
 		echo $cell['dname'] . " (" . $cell['name'] . ")</a>";
 		break;
 	case 'ipvs':
-		echo "<tr><td rowspan=3 width='5%'>";
-		printImageHREF ('VS');
-		echo "</td><td>";
+		echo "<div>";
+		printImage ('VS');
 		echo "<a class='$a_class' href='index.php?page=ipvs&vs_id=${cell['id']}'>";
-		echo $cell['name'] . "</a></td></tr>";
+		echo $cell['name'] . "</a></div>";
 		break;
 	case 'ipv4rspool':
 		echo "<div><a class='$a_class' href='index.php?page=ipv4rspool&pool_id=${cell['id']}'>";
@@ -205,8 +204,8 @@ function renderSLBTripletsEdit ($cell)
 		foreach ($triplets[0]->display_cells as $field)
 			$cells[] = $triplets[0]->$field;
 
-		startPortlet ('Manage existing (' . count ($triplets) . ')');
-		echo "<table cellspacing=0 cellpadding=5 align=center class=cooltable>\n";
+		startPortlet ('Manage existing',12,'',count ($triplets));
+		echo "<table class='table table-striped'>\n";
 		global $nextorder;
 		$order = 'odd';
 		foreach ($triplets as $slb)
@@ -223,9 +222,7 @@ function renderSLBTripletsEdit ($cell)
 			$del_params = $ids;
 			$del_params['op'] = 'delLB';
 			printOpFormIntro ('updLB', $ids);
-			echo "<tr valign=top class=row_${order}><td rowspan=2 class=tdright valign=middle>";
-			echo getOpLink ($del_params, '', 'i:trash', 'Unconfigure');
-			echo "</td><td class=tdleft valign=bottom>";
+			echo "<tr valign=top class=row_${order}><td class=tdleft valign=bottom>";
 			renderSLBEntityCell ($cells[0]);
 			echo "</td><td>VS config &darr;<br><textarea name=vsconfig rows=5 cols=70>" . htmlspecialchars ($slb->slb['vsconfig']) . "</textarea></td>";
 			echo '<td class=tdleft rowspan=2 valign=middle>';
@@ -236,6 +233,8 @@ function renderSLBTripletsEdit ($cell)
 			echo '</td><td>';
 			echo "<textarea name=rsconfig rows=5 cols=70>" . htmlspecialchars ($slb->slb['rsconfig']) . "</textarea><br>RS config &uarr;";
 			echo "<div style='float:left; margin-top:10px'><label><input name=prio type=text size=10 value=\"" . htmlspecialchars ($slb->slb['prio']) . "\"> &larr; Priority</label></div>";
+			echo '</td><td rowspan=2 class=tdright valign=middle>';
+			echo getOpLink ($del_params, '', 'i:trash', 'Unconfigure');
 			echo '</td></tr></form>';
 			$order = $nextorder[$order];
 		}

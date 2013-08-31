@@ -125,7 +125,7 @@ function menuItemClicked(menuItem, menu) {
 
 function tracePortClicked(event) {
 	var portnameElem = $(this).siblings('.interactive-portname')[0];
-	var port_id = portnameElem.name.replace (/port-/, '');
+	var port_id = $(portnameElem).attr('name').replace (/port-/, '');
 	window.open (
 		"?module=popup&helper=traceroute&port=" + port_id,
 		'findlink',

@@ -56,6 +56,39 @@ input.elastic {
 	margin-top:-2px;
 }
 
+
+.slb-checks li.disabled {
+	color: #999999;
+	list-style-image: url(?module=chrome&uri=pix/unchecked.png)
+}
+
+.slb-checks li.disabled * {
+	color: #999999;
+}
+
+.slb-checks li.enabled {
+	list-style-image: url(?module=chrome&uri=pix/checked.png);
+}
+
+.slb-checks.editable li:hover {
+	list-style-image: url(?module=chrome&uri=pix/pencil-icon.png);
+	cursor: pointer;
+}
+
+.slb-checks.editable li a {
+	cursor: pointer;
+}
+
+.slb-checks.editable li * {
+	cursor: auto;
+}
+
+.slb-checks li form {
+	display: none;
+}
+
+
+
 .infocell {
 	padding: 4px;
 	white-space: nowrap;

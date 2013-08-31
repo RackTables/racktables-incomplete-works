@@ -80,8 +80,17 @@ $attrtypes = array
 
 $quick_links = NULL; // you can override this in your local.php, but first initialize it with getConfiguredQuickLinks()
 
-function renderQuickLinks()
+function renderQuickLinks($allLinks = false)
 {
+
+	if ($allLinks) {
+		global $indexlayout, $page;
+		foreach ($indexlayout as $row)
+			foreach ($row as $ypageno)
+				 echo '<li><a href="index.php?page=' . $ypageno . '">' . str_replace (' ', '&nbsp;', getPageName ($ypageno)) . '</a></li>';
+		return;
+	}
+
 	global $quick_links;
 	if (! isset ($quick_links))
 		$quick_links = getConfiguredQuickLinks();
@@ -132,7 +141,8 @@ function renderInterfaceHTML ($pageno, $tabno, $payload)
                       <li class="dropdown">
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown"><b class="caret"></b></a>
                         <ul class="dropdown-menu">
-
+							<?php renderQuickLinks(true) ?>
+							<li class="divider"></li>
                           <li><a href="?logout">Log Out</a></li>
                         </ul>
                       </li>
@@ -604,12 +614,12 @@ function renderLocationRowForEditor ($subtree, $level = 0)
 		echo getSelect
 		(
 			array ( 'parent' => $parent ? htmlspecialchars ($locationinfo['parent_name']) : '-- NONE --'),
-			array ('name' => 'parent_id', 'id' => 'locationid_' . $locationinfo['id'], 'class' => 'locationlist-popup elastic'),
+			array ('name' => 'parent_id', 'id' => 'locationid_' . $locationinfo['id'], 'class' => 'locationlist-popup input-block-level'),
 			$parent,
 			FALSE
 		);
 		echo "</td><td class=tdleft>";
-		echo "<input class='input-flush elastic' type=text size=48 name=name value='${locationinfo['name']}'>";
+		echo "<input class='input-flush input-block-level' type=text size=48 name=name value='${locationinfo['name']}'>";
 		echo '</td><td><div class="btn-group">' . getImageHREF ('i:ok', 't:Update', TRUE) ;
 
 			if ($locationinfo['refcnt'] > 0 || $locationinfo['kidc'] > 0)
@@ -653,10 +663,10 @@ JSTXT;
 	function printNewItemTR ()
 	{
 		printOpFormIntro ('addLocation',array(),false,'form-flush');
-		echo "<tr><td></td><td><select class='input-flush elastic' name=parent_id tabindex=100>";
+		echo "<tr><td></td><td><select class='input-flush input-block-level' name=parent_id tabindex=100>";
 		renderLocationSelectTree ();
 		echo "</td>";
-		echo "<td><input class='input-flush elastic' type=text size=48 name=name tabindex=101></td><td>";
+		echo "<td><input class='input-flush input-block-level' type=text size=48 name=name tabindex=101></td><td>";
 		printImageHREF ('i:plus', 't:Add', TRUE, 102);
 		echo "</td></tr></form>\n";
 	}
@@ -681,10 +691,10 @@ function renderRackspaceRowEditor ()
 	function printNewItemTR ()
 	{
 		printOpFormIntro ('addRow');
-		echo "<tr><td><select class='input-flush elastic' name=location_id tabindex=100>";
+		echo "<tr><td><select class='input-flush input-block-level' name=location_id tabindex=100>";
 		renderLocationSelectTree ();
 		echo "</td>";
-		echo "<td><input class='input-flush elastic' type=text name=name tabindex=101></td><td>";
+		echo "<td><input class='input-flush input-block-level' type=text name=name tabindex=101></td><td>";
 		printImageHREF ('i:plus', 't:Add new row', TRUE, 102);
 
 		echo '</td></tr></form>';
@@ -698,9 +708,9 @@ function renderRackspaceRowEditor ()
 	{
 		echo "<tr><td>";
 		printOpFormIntro ('updateRow', array ('row_id' => $row_id));
-		echo '<select class="input-flush elastic" name=location_id tabindex=100>';
+		echo '<select class="input-flush input-block-level" name=location_id tabindex=100>';
 		renderLocationSelectTree ($rowInfo['location_id']);
-		echo "</td><td><input class='input-flush elastic' type=text name=name value='${rowInfo['name']}'></td><td><div class='btn-group'>";
+		echo "</td><td><input class='input-flush input-block-level' type=text name=name value='${rowInfo['name']}'></td><td><div class='btn-group'>";
 		printImageHREF ('i:ok', 't:Save changes', TRUE);
 
 		if ($rc = $rowInfo['rackc'])
@@ -1104,10 +1114,9 @@ function renderEditObjectForm()
 			echo'</div></div>';
 			$label = '&nbsp;';
 		}
-		echo "<tr><td>&nbsp;</td>";
-		echo "<th class=tdright>Select container:</th><td class=tdleft>";
-		echo getPopupLink ('objlist', array ('object_id' => $object_id), 'findlink', 'attach', 'Select a container');
-		echo "</td></tr>\n";
+		echo '<div class="control-group"><label class="control-label" >Select container:</label><div class="controls">';
+		echo getPopupLink ('objlist', array ('object_id' => $object_id), 'findlink', 'i:th-large', 'Select a container','','btn');
+		echo'</div></div>';
 	}
 	// optional attributes
 	$i = 0;
@@ -1482,7 +1491,7 @@ function renderObject ($object_id)
 		}
 		echo '<div class="padded pull-right">';
 		echo getPopupLink ('traceroute', array ('object_id' => $object_id), 'findlink', 'i:search', 'Trace all port links','','btn');
-		echo '</div>';		
+		echo '</div>';
 		echo "<table cellspacing=0 cellpadding='5' align='center' class='table table-striped'>";
 		echo '<thead><tr><th class=tdleft>Local name</th><th class=tdleft>Visible label</th>';
 		echo '<th class=tdleft>Interface</th><th class=tdleft>L2 address</th>';
@@ -1601,7 +1610,7 @@ function renderObject ($object_id)
 		echo '</div>';
 	}
 	echo '<div class="row">';
-	renderSLBTriplets2 ($info);
+	renderSLBTriplets2 ($info,false,null,8);
 	renderSLBTriplets ($info);
 	echo "</div>";
 
@@ -1659,10 +1668,10 @@ function renderPortsForObject ($object_id)
 	function printNewItemTR ($prefs)
 	{
 		printOpFormIntro ('addPort',array(),false,'form-flush');
-		echo "<tr><td class='tdleft'><input type=text class='elastic input-flush' size=8 name=port_name tabindex=100></td>\n";
-		echo "<td><input class='elastic input-flush' type=text name=port_label tabindex=101></td><td>";
-		printNiftySelect (getNewPortTypeOptions(), array ('class' => 'form-flush elastic', 'name' => 'port_type_id', 'tabindex' => 102), $prefs['selected'],false);
-		echo "<td><input class='elastic input-flush' type=text name=port_l2address tabindex=103 size=18 maxlength=24></td>\n";
+		echo "<tr><td class='tdleft'><input type=text class='input-block-level input-flush' size=8 name=port_name tabindex=100></td>\n";
+		echo "<td><input class='input-block-level input-flush' type=text name=port_label tabindex=101></td><td>";
+		printNiftySelect (getNewPortTypeOptions(), array ('class' => 'form-flush input-block-level', 'name' => 'port_type_id', 'tabindex' => 102), $prefs['selected'],false);
+		echo "<td><input class='input-block-level input-flush' type=text name=port_l2address tabindex=103 size=18 maxlength=24></td>\n";
 		echo "<td colspan=4>&nbsp;</td><td>";
 		printImageHREF ('i:plus', 't:Add', TRUE, 104); //add a port
 		echo "</td></tr></form>";
@@ -1679,11 +1688,11 @@ function renderPortsForObject ($object_id)
 		echo "<table cellspacing=0 cellpadding='5' align='center' class='table table-flush table-striped'>\n";
 		echo "<thead><tr><th class=tdleft>Local name</th><th class=tdleft>Visible label</th><th class=tdleft>Interface</th><th class=tdleft>Start Number</th>";
 		echo "<th class=tdleft>Count</th></tr></thead>\n";
-		echo "<tr><td><input type=text class='elastic' name=port_name tabindex=105></td>\n";
-		echo "<td><input class='elastic' type=text name=port_label tabindex=106></td><td>";
-		printNiftySelect (getNewPortTypeOptions(), array ('class'=>'elastic', 'name' => 'port_type_id', 'tabindex' => 107), $prefs['selected']);
-		echo "<td><input type=text class='elastic' name=port_numbering_start tabindex=108 size=3 maxlength=3></td>\n";
-		echo "<td><input type=text class='elastic' name=port_numbering_count tabindex=109 size=3 maxlength=3></td>\n";
+		echo "<tr><td><input type=text class='input-block-level' name=port_name tabindex=105></td>\n";
+		echo "<td><input class='input-block-level' type=text name=port_label tabindex=106></td><td>";
+		printNiftySelect (getNewPortTypeOptions(), array ('class'=>'input-block-level', 'name' => 'port_type_id', 'tabindex' => 107), $prefs['selected']);
+		echo "<td><input type=text class='input-block-level' name=port_numbering_start tabindex=108 size=3 maxlength=3></td>\n";
+		echo "<td><input type=text class='input-block-level' name=port_numbering_count tabindex=109 size=3 maxlength=3></td>\n";
 		echo "<td>&nbsp;</td></tr></table><div style='padding-left: 20px;' class='form-actions form-flush'>";
 		printImageHREF ('i:plus', 'Add ports', TRUE, 110);
 		echo "</div>";
@@ -1715,13 +1724,13 @@ function renderPortsForObject ($object_id)
 		printOpFormIntro ('editPort', array ('port_id' => $port['id']),false,'form-flush');
 		$a_class = isEthernetPort ($port) ? 'port-menu' : '';
 		echo "<td class='tdleft' NOWRAP><input type=text name=name class='input-small input-flush interactive-portname $a_class' value='${port['name']}' size=8></td>";
-		echo "<td><input class='elastic input-flush' type=text name=label value='${port['label']}'></td>";
+		echo "<td><input class='input-block-level input-flush' type=text name=label value='${port['label']}'></td>";
 		if (! $port['linked'])
 		{
 			echo '<td>';
 			if ($port['iif_id'] != 1)
 				echo '<label>' . $port['iif_name'] . ' ';
-			printSelect (getExistingPortTypeOptions ($port['id']), array ('class' => 'elastic input-flush', 'name' => 'port_type_id'), $port['oif_id']);
+			printSelect (getExistingPortTypeOptions ($port['id']), array ('class' => 'input-block-level input-flush', 'name' => 'port_type_id'), $port['oif_id']);
 			if ($port['iif_id'] != 1)
 				echo '</label>';
 			echo '</td>';
@@ -1733,7 +1742,7 @@ function renderPortsForObject ($object_id)
 		}
 		// 18 is enough to fit 6-byte MAC address in its longest form,
 		// while 24 should be Ok for WWN
-		echo "<td><input type=text class='elastic input-flush'  name=l2address value='${port['l2address']}' size=18 maxlength=24></td>\n";
+		echo "<td><input type=text class='input-block-level input-flush'  name=l2address value='${port['l2address']}' size=18 maxlength=24></td>\n";
 		$deleteinc = false;
 		if ($port['linked'])
 		{
@@ -1754,7 +1763,7 @@ function renderPortsForObject ($object_id)
 				echo "<input type=hidden name=link_id value='".$linkinfo['link_id']."'>";
 				echo '<td class=tdleft>'.formatLoggedSpan ($port['last_log'], formatPortLink ($linkinfo['remote_object_id'], $linkinfo['remote_object_name'], $linkinfo['remote_id'], NULL)).'</td>';
 				echo '<td class=tdleft>'.formatLoggedSpan ($port['last_log'], $linkinfo['remote_name'], 'underline').'</td>';
-				echo "<td><input class='elastic input-flush' type=text name=cable value='".$linkinfo['cableid']."'></td>";
+				echo "<td><input class='input-block-level input-flush' type=text name=cable value='".$linkinfo['cableid']."'></td>";
 				echo '<td class=tdcenter>';
 				echo '<div class="btn-group">';
 				echo getPopupLink ('portlist', array ('port' => $port['id'], 'in_rack' => 'on'), 'findlink', 'plug', '', 'Link this port','btn');
@@ -1818,15 +1827,15 @@ function renderPortsForObject ($object_id)
 	}
 
 			// clear ports link
-	echo "<div class='form-actions form-flush'>";	
+	echo "<div class='form-actions form-flush'>";
 	echo getOpLink (array ('op'=>'deleteAll'), 'Clear port list', 'i:trash', 'Delete all existing ports', 'need-confirmation');
-	
+
 	// link patch panels link
 	if ($object['objtype_id'] == 9)
 		echo getPopupLink ('patchpanellist', array ('object_id' => $object_id), 'findlink', 'plug', 'Link to another patch panel','','btn');
 
 	echo getPopupLink ('traceroute', array ('object_id' => $object_id), 'findlink', 'i:search', 'Trace all port links','','btn');
-	
+
 	echo "</div>";
 
 	finishPortlet();
@@ -1857,12 +1866,12 @@ function renderIPForObject ($object_id)
 		global $aat;
 		printOpFormIntro ('add');
 		echo "<tr>";
-		echo "<td class=tdleft><input class='input-flush elastic' type='text' size='10' name='bond_name' tabindex=100></td>\n"; // if-name
-		echo "<td class=tdleft><input class='input-flush elastic' type=text name='ip' tabindex=101></td>\n"; // IP
+		echo "<td class=tdleft><input class='input-flush input-block-level' type='text' size='10' name='bond_name' tabindex=100></td>\n"; // if-name
+		echo "<td class=tdleft><input class='input-flush input-block-level' type=text name='ip' tabindex=101></td>\n"; // IP
 		if (getConfigVar ('EXT_IPV4_VIEW') == 'yes')
 			echo "<td colspan=2>&nbsp;</td>"; // network, routed by
 		echo '<td>';
-		printSelect ($aat, array ('name' => 'bond_type', 'tabindex' => 102), $default_type,'elastic input-flush'); // type
+		printSelect ($aat, array ('name' => 'bond_type', 'tabindex' => 102), $default_type,'input-block-level input-flush'); // type
 		echo "</td><td></td><td>"; // misc
 		printImageHREF ('i:plus', 't:Add', TRUE, 103); // right btn 'allocate'
 		echo "</td></tr></form>";
@@ -1894,14 +1903,14 @@ function renderIPForObject ($object_id)
 		$alloc_list .= "<tr class='${rendered_alloc['tr_class']}' valign=top>";
 		$alloc_list .= getOutputOf ('printOpFormIntro', 'upd', array ('ip' => $alloc['addrinfo']['ip']));
 
-		$alloc_list .= "<td class=tdleft><input class='input-flush elastic' type='text' name='bond_name' value='${alloc['osif']}' size=10>" . $rendered_alloc['td_name_suffix'] . "</td>";
+		$alloc_list .= "<td class=tdleft><input class='input-flush input-block-level' type='text' name='bond_name' value='${alloc['osif']}' size=10>" . $rendered_alloc['td_name_suffix'] . "</td>";
 		$alloc_list .= $rendered_alloc['td_ip'];
 		if (getConfigVar ('EXT_IPV4_VIEW') == 'yes')
 		{
 			$alloc_list .= $rendered_alloc['td_network'];
 			$alloc_list .= $rendered_alloc['td_routed_by'];
 		}
-		$alloc_list .= '<td>' . getSelect ($aat, array ('name' => 'bond_type'), $alloc['type'],true,'elastic input-flush') . "</td>";
+		$alloc_list .= '<td>' . getSelect ($aat, array ('name' => 'bond_type'), $alloc['type'],true,'input-block-level input-flush') . "</td>";
 		$alloc_list .= $rendered_alloc['td_peers'];
 		$alloc_list .= "<td><div class='btn-group'>";
 		$alloc_list .= getImageHREF ('i:ok', 't:Save', TRUE);
@@ -3281,9 +3290,9 @@ function renderIPAddressAllocations ($ip_bin)
 		global $aat;
 		printOpFormIntro ('add');
 		echo "<tr><td>";
-		printSelect (getNarrowObjectList ('IPV4OBJ_LISTSRC'), array ('class' => 'input-flush elastic', 'name' => 'object_id', 'tabindex' => 100),null);
-		echo "</td><td><input class='input-flush elastic' type=text tabindex=101 name=bond_name size=10></td><td>";
-		printSelect ($aat, array ('class' => 'input-flush elastic', 'name' => 'bond_type', 'tabindex' => 102, 'regular'),null);
+		printSelect (getNarrowObjectList ('IPV4OBJ_LISTSRC'), array ('class' => 'input-flush input-block-level', 'name' => 'object_id', 'tabindex' => 100),null);
+		echo "</td><td><input class='input-flush input-block-level' type=text tabindex=101 name=bond_name size=10></td><td>";
+		printSelect ($aat, array ('class' => 'input-flush input-block-level', 'name' => 'bond_type', 'tabindex' => 102, 'regular'),null);
 		echo "</td><td>";
 		printImageHREF ('i:plus', 't:allocate', TRUE, 103);
 		echo "</td></form></tr>";
@@ -3309,8 +3318,8 @@ function renderIPAddressAllocations ($ip_bin)
 
 			//echo "<td></td>";
 			echo "<td><a href='" . makeHref (array ('page' => 'object', 'object_id' => $bond['object_id'], 'hl_ip' => $address['ip'])) . "'>${bond['object_name']}</td>";
-			echo "<td><input class='input-flush elastic' type='text' name='bond_name' value='${bond['name']}' size=10></td><td>";
-			printSelect ($aat, array ('class' => 'input-flush elastic', 'name' => 'bond_type'), $bond['type']);
+			echo "<td><input class='input-flush input-block-level' type='text' name='bond_name' value='${bond['name']}' size=10></td><td>";
+			printSelect ($aat, array ('class' => 'input-flush input-block-level', 'name' => 'bond_type'), $bond['type']);
 			echo "</td><td><div class='btn-group'>";
 			printImageHREF ('i:ok', 't:Save changes', TRUE);
 			echo getOpLink (array ('op' => 'del', 'object_id' => $bond['object_id'] ), '', 'i:trash', 'Unallocate address');
@@ -3345,7 +3354,7 @@ function renderNATv4ForObject ($object_id)
 		echo getPopupLink ('inet4list', array(), 'findobjectip', 'i:search', '','Find object','btn');
 		echo "<input class='input-small input-flush' type='text' name='remoteip' id='remoteip' size='10' tabindex=3>";
 		echo "</div>:<input type='text' class='input-mini input-flush' name='remoteport' size='4' tabindex=4></td><td></td>";
-		echo "<td colspan=1><input class='input-flush elastic' type='text' name='description' size='20' tabindex=5></td><td>";
+		echo "<td colspan=1><input class='input-flush input-block-level' type='text' name='description' size='20' tabindex=5></td><td>";
 		printImageHREF ('i:plus', 't:Add', TRUE, 6); //'Add new NAT rule'
 		echo "</td></tr></form>";
 	}
@@ -3399,7 +3408,7 @@ function renderNATv4ForObject ($object_id)
 			'form-flush'
 		);
 		echo "</td><td class='description'>";
-		echo "<input class='input-flush elastic' type='text' name='description' value='${pf['description']}'></td><td><div class='btn-group'>";
+		echo "<input class='input-flush input-block-level' type='text' name='description' value='${pf['description']}'></td><td><div class='btn-group'>";
 		printImageHREF ('i:ok', 't:Save', TRUE);
 		getOpLink  (
 			array (
@@ -3475,11 +3484,11 @@ function renderAddMultipleObjectsForm ()
 	{
 		echo '<tr><td>';
 		// Don't employ DEFAULT_OBJECT_TYPE to avoid creating ghost records for pre-selected empty rows.
-		printNiftySelect ($phys_typelist, array ('name' => "${i}_object_type_id", 'tabindex' => $tabindex), 0,false,'elastic');
+		printNiftySelect ($phys_typelist, array ('name' => "${i}_object_type_id", 'tabindex' => $tabindex), 0,false,'input-block-level');
 		echo '</td>';
-		echo "<td><input class='elastic' type=text size=30 name=${i}_object_name tabindex=${tabindex}></td>";
-		echo "<td><input class='elastic' type=text size=30 name=${i}_object_label tabindex=${tabindex}></td>";
-		echo "<td><input class='elastic' type=text size=20 name=${i}_object_asset_no tabindex=${tabindex}></td>";
+		echo "<td><input class='input-block-level' type=text size=30 name=${i}_object_name tabindex=${tabindex}></td>";
+		echo "<td><input class='input-block-level' type=text size=30 name=${i}_object_label tabindex=${tabindex}></td>";
+		echo "<td><input class='input-block-level' type=text size=20 name=${i}_object_asset_no tabindex=${tabindex}></td>";
 		if ($i == 0)
 		{
 			echo "<td class='span2' valign=top rowspan=${max}>";
@@ -3509,9 +3518,9 @@ function renderAddMultipleObjectsForm ()
 	{
 		echo '<tr><td>';
 		// Don't employ DEFAULT_OBJECT_TYPE to avoid creating ghost records for pre-selected empty rows.
-		printNiftySelect ($virt_typelist, array ('name' => "${i}_object_type_id", 'tabindex' => $tabindex), 0,false,'elastic');
+		printNiftySelect ($virt_typelist, array ('name' => "${i}_object_type_id", 'tabindex' => $tabindex), 0,false,'input-block-level');
 		echo '</td>';
-		echo "<td><input class='elastic' type=text size=30 name=${i}_object_name tabindex=${tabindex}></td>";
+		echo "<td><input class='input-block-level' type=text size=30 name=${i}_object_name tabindex=${tabindex}></td>";
 		if ($i == 0)
 		{
 			echo "<td valign=top rowspan=${max}>";
@@ -3537,7 +3546,7 @@ function renderAddMultipleObjectsForm ()
 	echo "<table class='table table-boarderless'><thead><tr><th>Names</th><th>Type</th><th style='width:25%;'>Tags</th></tr></thead>";
 	echo "<tr><td><textarea style='width:100%;' name=namelist cols=40 rows=25>\n";
 	echo "</textarea></td><td valign=top>";
-	printNiftySelect ($lot_typelist, array ('name' => 'global_type_id'), getConfigVar ('DEFAULT_OBJECT_TYPE'),false,'elastic');
+	printNiftySelect ($lot_typelist, array ('name' => 'global_type_id'), getConfigVar ('DEFAULT_OBJECT_TYPE'),false,'input-block-level');
 	echo "</td><td valign=top>";
 	renderNewEntityTags ('object');
 	echo "</td></tr>";
@@ -3965,9 +3974,9 @@ function renderUserListEditor ()
 	foreach ($accounts as $account)
 	{
 		printOpFormIntro ('updateUser', array ('user_id' => $account['user_id']),false,'form-flush');
-		echo "<tr><td><input class='elastic input-flush' type=text name=username value='${account['user_name']}' size=16></td>";
-		echo "<td><input class='elastic input-flush' type=text name=realname value='${account['user_realname']}' size=24></td>";
-		echo "<td><input class='elastic input-flush' type=password name=password value='${account['user_password_hash']}' size=40></td><td>";
+		echo "<tr><td><input class='input-block-level input-flush' type=text name=username value='${account['user_name']}' size=16></td>";
+		echo "<td><input class='input-block-level input-flush' type=text name=realname value='${account['user_realname']}' size=24></td>";
+		echo "<td><input class='input-block-level input-flush' type=password name=password value='${account['user_password_hash']}' size=40></td><td>";
 		printImageHREF ('i:ok', 't:Save changes', TRUE);
 		echo '</td></form></tr>';
 	}
@@ -4002,9 +4011,9 @@ function renderOIFCompatEditor()
 	{
 		printOpFormIntro ('add');
 		echo '<tr><td class=tdleft>';
-		printSelect (readChapter (CHAP_PORTTYPE), array ('name' => 'type1'),null,'input-flush elastic');
+		printSelect (readChapter (CHAP_PORTTYPE), array ('name' => 'type1'),null,'input-flush input-block-level');
 		echo '</td><td class=tdleft>';
-		printSelect (readChapter (CHAP_PORTTYPE), array ('name' => 'type2'),null,'input-flush elastic');
+		printSelect (readChapter (CHAP_PORTTYPE), array ('name' => 'type2'),null,'input-flush input-block-level');
 		echo '</td><td class=tdleft>';
 		printImageHREF ('i:plus', 't:Add pair', TRUE);
 		echo '</td></tr></form>';
@@ -4085,9 +4094,9 @@ function renderObjectParentCompatEditor()
 		$chapter = readChapter (CHAP_OBJTYPE);
 		// remove rack, row, location
 		unset ($chapter['1560'], $chapter['1561'], $chapter['1562']);
-		printSelect ($chapter, array ('name' => 'parent_objtype_id'),null,'elastic input-flush');
+		printSelect ($chapter, array ('name' => 'parent_objtype_id'),null,'input-block-level input-flush');
 		echo '</td><td class=tdleft>';
-		printSelect ($chapter, array ('name' => 'child_objtype_id'),null,'elastic input-flush');
+		printSelect ($chapter, array ('name' => 'child_objtype_id'),null,'input-block-level input-flush');
 		echo '</td><td class=tdleft>';
 		printImageHREF ('i:plus', 't:Add pair', TRUE);
 		echo '</td></tr></form>';
@@ -4406,7 +4415,7 @@ function renderChaptersEditor ()
 	function printNewItemTR ()
 	{
 		printOpFormIntro ('add');
-		echo "<tr><td><input class='input-flush elastic'  type=text name=chapter_name tabindex=100></td><td>&nbsp;</td><td>";
+		echo "<tr><td><input class='input-flush input-block-level'  type=text name=chapter_name tabindex=100></td><td>&nbsp;</td><td>";
 		printImageHREF ('i:plus', 't:Add new', TRUE, 101);
 		echo '</td></tr></form>';
 	}
@@ -4431,7 +4440,7 @@ function renderChaptersEditor ()
 		printOpFormIntro ('upd', array ('chapter_no' => $chapter_id));
 		echo '<tr>';
 
-		echo "<td><input class='input-flush elastic' type=text name=chapter_name value='${chapter['name']}'" . ($sticky ? ' disabled' : '') . "></td>";
+		echo "<td><input class='input-flush input-block-level' type=text name=chapter_name value='${chapter['name']}'" . ($sticky ? ' disabled' : '') . "></td>";
 		echo "<td class=tdleft>${wordcount}</td><td><div class='btn-group'>";
 
 		if (!$sticky) {
@@ -4490,9 +4499,9 @@ function renderEditAttributesForm ()
 	function printNewItemTR ()
 	{
 		printOpFormIntro ('add',array(),false,'form-flush');
-		echo '<tr><td><input class="elastic input-flush" type=text tabindex=100 name=attr_name></td><td>';
+		echo '<tr><td><input class="input-block-level input-flush" type=text tabindex=100 name=attr_name></td><td>';
 		global $attrtypes;
-		printSelect ($attrtypes, array ('name' => 'attr_type', 'tabindex' => 101),null,'elastic input-flush');
+		printSelect ($attrtypes, array ('name' => 'attr_type', 'tabindex' => 101),null,'input-block-level input-flush');
 		echo '</td><td>';
 		printImageHREF ('i:plus', 't:Create attribute', TRUE, 102);
 		echo '</td></tr></form>';
@@ -4505,7 +4514,7 @@ function renderEditAttributesForm ()
 	foreach (getAttrMap() as $attr)
 	{
 		printOpFormIntro ('upd', array ('attr_id' => $attr['id']));
-		echo "<tr><td><input class='elastic input-flush' type=text name=attr_name value='${attr['name']}'></td>";
+		echo "<tr><td><input class='input-block-level input-flush' type=text name=attr_name value='${attr['name']}'></td>";
 		echo "<td class=tdleft>${attr['type']}</td><td><div class='btn-group'>";
 		printImageHREF ('i:ok', 't:Save changes', TRUE);
 
@@ -4530,7 +4539,7 @@ function renderEditAttrMapForm ()
 	{
 		printOpFormIntro ('add');
 		echo '<tr><td colspan=2 class=tdleft>';
-		echo '<select class="input-flush elastic" name=attr_id tabindex=100>';
+		echo '<select class="input-flush input-block-level" name=attr_id tabindex=100>';
 		$shortType['uint'] = 'U';
 		$shortType['float'] = 'F';
 		$shortType['string'] = 'S';
@@ -5742,7 +5751,7 @@ function renderConfigEditor ()
 		echo "<tr class='vcentred'><td  class='rightalign'><input type=hidden name=${i}_varname value='${v['varname']}'>";
 		renderConfigVarName ($v);
 		echo '</td><td style="padding-right:44px;">';
-		echo "<div style='width:100%;' class='input-append'><input class='elastic' type=text name=${i}_varvalue value='" .  htmlspecialchars ($v['varvalue'], ENT_QUOTES) . "'>{$editbutton}</td></tr>";
+		echo "<div style='width:100%;' class='input-append'><input class='input-block-level' type=text name=${i}_varvalue value='" .  htmlspecialchars ($v['varvalue'], ENT_QUOTES) . "'>{$editbutton}</td></tr>";
 		$i++;
 	}
 	echo "</table><input type=hidden name=num_vars value=${i}><div class='form-actions form-flush'><span  style='margin-left:290px;'>";
@@ -6770,9 +6779,9 @@ function renderIIFOIFCompatEditor()
 	{
 		printOpFormIntro ('add');
 		echo '<tr><th class=tdleft>';
-		printSelect (getPortIIFOptions(), array ('name' => 'iif_id'),null,'input-flush elastic');
+		printSelect (getPortIIFOptions(), array ('name' => 'iif_id'),null,'input-flush input-block-level');
 		echo '</th><th class=tdleft>';
-		printSelect (readChapter (CHAP_PORTTYPE), array ('name' => 'oif_id'),null,'input-flush elastic');
+		printSelect (readChapter (CHAP_PORTTYPE), array ('name' => 'oif_id'),null,'input-flush input-block-level');
 		echo '</th><th class=tdleft>';
 		printImageHREF ('i:plus', 't:add pair', TRUE);
 		echo '</th></tr></form>';
@@ -7065,7 +7074,7 @@ function renderVLANDomainListEditor ()
 	{
 		printOpFormIntro ('add');
 		echo '<tr><td>';
-		echo '<input class="input-flush elastic" type=text size=48 name=vdom_descr tabindex=102>';
+		echo '<input class="input-flush input-block-level" type=text size=48 name=vdom_descr tabindex=102>';
 		echo '</td><td>';
 		printImageHREF ('i:plus', 't:create domain', TRUE, 103);
 		echo '</td></tr></form>';
@@ -7077,7 +7086,7 @@ function renderVLANDomainListEditor ()
 	foreach ($stats as $vdom_id => $dominfo)
 	{
 		printOpFormIntro ('upd', array ('vdom_id' => $vdom_id));
-		echo '<tr><td><input class="input-flush elastic" name=vdom_descr type=text size=48 value="';
+		echo '<tr><td><input class="input-flush input-block-level" name=vdom_descr type=text size=48 value="';
 		echo niftyString ($dominfo['description'], 0) . '">';
 		echo '</td><td><div class="btn-group">';
 		printImageHREF ('i:ok', 't:Save', TRUE);
@@ -7160,11 +7169,11 @@ function renderVLANDomainVLANList ($vdom_id)
 		global $vtoptions;
 		printOpFormIntro ('add');
 		echo '<tr><td>';
-		echo '<input class="input-flush elastic" type=text name=vlan_id size=4 tabindex=101>';
+		echo '<input class="input-flush input-block-level" type=text name=vlan_id size=4 tabindex=101>';
 		echo '</td><td>';
-		printSelect ($vtoptions, array ('class' => 'input-flush elastic', 'name' => 'vlan_type', 'tabindex' => 102), 'ondemand');
+		printSelect ($vtoptions, array ('class' => 'input-flush input-block-level', 'name' => 'vlan_type', 'tabindex' => 102), 'ondemand');
 		echo '</td><td>';
-		echo '<input class="input-flush elastic" type=text size=48 name=vlan_descr tabindex=103>';
+		echo '<input class="input-flush input-block-level" type=text size=48 name=vlan_descr tabindex=103>';
 		echo '</td><td>';
 		printImageHREF ('i:plus', 't:Add VLAN', TRUE, 110);
 		echo '</td></tr></form>';
@@ -7179,9 +7188,9 @@ function renderVLANDomainVLANList ($vdom_id)
 	{
 		printOpFormIntro ('upd', array ('vlan_id' => $vlan_id));
 		echo '<tr><td class=tdright><tt>' . $vlan_id . '</tt></td><td>';
-		printSelect ($vtoptions, array ('class' => 'input-flush elastic', 'name' => 'vlan_type'), $vlan_info['vlan_type']);
+		printSelect ($vtoptions, array ('class' => 'input-flush input-block-level', 'name' => 'vlan_type'), $vlan_info['vlan_type']);
 		echo '</td><td>';
-		echo '<input class="input-flush elastic" name=vlan_descr type=text size=48 value="' . htmlspecialchars ($vlan_info['vlan_descr']) . '">';
+		echo '<input class="input-flush input-block-level" name=vlan_descr type=text size=48 value="' . htmlspecialchars ($vlan_info['vlan_descr']) . '">';
 		echo '</td><td><div class="btn-group">';
 		printImageHREF ('i:ok', 't:Save', TRUE);
 		if ($vlan_info['portc'] or $vlan_id == VLAN_DFL_ID)
@@ -7355,9 +7364,9 @@ function renderObject8021QPorts ($object_id)
 			startPortlet ('port duplicator',4,'padded');
 			echo '<table style="width:100%;">';
 			printOpFormIntro ('save8021QConfig', array ('mutex_rev' => $vswitch['mutex_rev'], 'form_mode' => 'duplicate'));
-			echo '<tr><td>' . getSelect ($port_options, array ('name' => 'from_port'), null, false, 'input-flush elastic') . '</td></tr>';
+			echo '<tr><td>' . getSelect ($port_options, array ('name' => 'from_port'), null, false, 'input-flush input-block-level') . '</td></tr>';
 			echo '<tr><td>&darr; &darr; &darr;</td></tr>';
-			echo '<tr><td>' . getSelect ($port_options, array ('name' => 'to_ports[]', 'size' => getConfigVar ('MAXSELSIZE'), 'multiple' => 1), null, false, 'elastic') . '</td></tr>';
+			echo '<tr><td>' . getSelect ($port_options, array ('name' => 'to_ports[]', 'size' => getConfigVar ('MAXSELSIZE'), 'multiple' => 1), null, false, 'input-block-level') . '</td></tr>';
 			echo '<tr><td>' . getImageHREF ('i:tags', 'duplicate', TRUE) . '</td></tr>';
 			echo '</form></table>';
 			finishPortlet();
@@ -8148,11 +8157,11 @@ function renderVSTListEditor()
 	{
 		printOpFormIntro ('add');
 		echo '<tr>';
-		echo '<td><input class="input-flush elastic" type=text size=48 name=vst_descr tabindex=101></td>';
+		echo '<td><input class="input-flush input-block-level" type=text size=48 name=vst_descr tabindex=101></td>';
 		echo '<td>' . getImageHREF ('i:plus', 't:Create template', TRUE, 103) . '</td>';
 		echo '</tr></form>';
 	}
-	
+
 	$templates = listCells ('vst');
 	startPortlet('Manage Templates',12,'',count($templates));
 	echo '<table class="table table-striped">';
@@ -8163,13 +8172,13 @@ function renderVSTListEditor()
 	{
 		printOpFormIntro ('upd', array ('vst_id' => $vst_id));
 		echo '<tr>';
-		echo '<td><input  class="input-flush elastic" name=vst_descr type=text size=48 value="' . niftyString ($vst_info['description'], 0) . '"></td>';
+		echo '<td><input  class="input-flush input-block-level" name=vst_descr type=text size=48 value="' . niftyString ($vst_info['description'], 0) . '"></td>';
 		echo '<td><div class="btn-group">' . getImageHREF ('i:ok', 't:update template', TRUE);
 		if ($vst_info['switchc'])
 			printImageHREF ('i:trash', 't:template used elsewhere');
 		else
 			echo getOpLink (array ('op' => 'del', 'vst_id' => $vst_id), '', 'i:trash', 't:Delete template');
-		
+
 		echo '</div></td></tr></form>';
 	}
 	if (getConfigVar ('ADDNEW_AT_TOP') != 'yes')
@@ -9191,9 +9200,9 @@ function renderCactiServersEditor()
 	{
 		printOpFormIntro ('add');
 		echo '<tr>';
-		echo '<td><input class="input-flush elastic" type=text size=48 name=base_url tabindex=101></td>';
-		echo '<td><input class="input-flush elastic" type=text size=24 name=username tabindex=102></td>';
-		echo '<td><input class="input-flush elastic" type=password size=24 name=password tabindex=103></td>';
+		echo '<td><input class="input-flush input-block-level" type=text size=48 name=base_url tabindex=101></td>';
+		echo '<td><input class="input-flush input-block-level" type=text size=24 name=username tabindex=102></td>';
+		echo '<td><input class="input-flush input-block-level" type=password size=24 name=password tabindex=103></td>';
 		echo '<td>&nbsp;</td>';
 		echo '<td>' . getImageHREF ('i:plus', 't:Add a new server', TRUE, 111) . '</td>';
 		echo '</tr></form>';
@@ -9208,9 +9217,9 @@ function renderCactiServersEditor()
 	{
 		printOpFormIntro ('upd', array ('id' => $server['id']));
 		echo '<tr>';
-		echo '<td><input class="input-flush elastic" type=text size=48 name=base_url value="' . htmlspecialchars ($server['base_url'], ENT_QUOTES, 'UTF-8') . '"></td>';
-		echo '<td><input class="input-flush elastic" type=text size=24 name=username value="' . htmlspecialchars ($server['username'], ENT_QUOTES, 'UTF-8') . '"></td>';
-		echo '<td><input class="input-flush elastic" type=password size=24 name=password value="' . htmlspecialchars ($server['password'], ENT_QUOTES, 'UTF-8') . '"></td>';
+		echo '<td><input class="input-flush input-block-level" type=text size=48 name=base_url value="' . htmlspecialchars ($server['base_url'], ENT_QUOTES, 'UTF-8') . '"></td>';
+		echo '<td><input class="input-flush input-block-level" type=text size=24 name=username value="' . htmlspecialchars ($server['username'], ENT_QUOTES, 'UTF-8') . '"></td>';
+		echo '<td><input class="input-flush input-block-level" type=password size=24 name=password value="' . htmlspecialchars ($server['password'], ENT_QUOTES, 'UTF-8') . '"></td>';
 		echo "<td class=tdright>${server['num_graphs']}</td>";
 		echo '<td><div class="btn-group">' . getImageHREF ('i:ok', 't:Update this server', TRUE);
 
@@ -9249,7 +9258,7 @@ function renderMuninServersEditor()
 	{
 		printOpFormIntro ('add');
 		echo '<tr>';
-		echo '<td><input class="input-flush elastic" type=text size=48 name=base_url tabindex=101></td>';
+		echo '<td><input class="input-flush input-block-level" type=text size=48 name=base_url tabindex=101></td>';
 		echo '<td>&nbsp;</td>';
 		echo '<td>' . getImageHREF ('i:plus', 't:Add a new server', TRUE, 111) . '</td>';
 		echo '</tr></form>';
@@ -9263,7 +9272,7 @@ function renderMuninServersEditor()
 	{
 		printOpFormIntro ('upd', array ('id' => $server['id']));
 		echo '<tr>';
-		echo '<td><input class="input-flush elastic" type=text size=48 name=base_url value="' . htmlspecialchars ($server['base_url'], ENT_QUOTES, 'UTF-8') . '"></td>';
+		echo '<td><input class="input-flush input-block-level" type=text size=48 name=base_url value="' . htmlspecialchars ($server['base_url'], ENT_QUOTES, 'UTF-8') . '"></td>';
 		echo "<td class=tdright>${server['num_graphs']}</td>";
 		echo '<td><div class="btn-group">' . getImageHREF ('i:ok', 't:update this server', TRUE);
 
