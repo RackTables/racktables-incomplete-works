@@ -1202,8 +1202,11 @@ function renderEditRackForm ($rack_id)
 
 	echo'<div class="control-group"><label class="control-label" >Rack row:</label><div class="controls">';
 	foreach (getAllRows () as $row_id => $rowInfo)
-		$rows[$row_id] = $rowInfo['name'];
-    natcasesort ($rows);
+	{
+		$trail = getLocationTrail ($rowInfo['location_id'], FALSE);
+		$rows[$row_id] = empty ($trail) ? $rowInfo['name'] : $rowInfo['name'] . ' [' . $trail . ']';
+	}
+	natcasesort ($rows);
 	printSelect ($rows, array ('name' => 'row_id'), $rack['row_id']);
 	echo '</div></div>';
 
@@ -1632,18 +1635,13 @@ function renderRackMultiSelect ($sname, $racks, $selected)
 {
 	// Transform the given flat list into a list of groups, each representing a rack row.
 	$rdata = array();
-	$locations = listCells ('location');
 	foreach ($racks as $rack)
 	{
-		// Include all parents in the location name
-		$location_name = '';
-		$location_id = $rack['location_id'];
-		while(isset ($location_id))
-		{
-			$location_name = $locations[$location_id]['name'] . ' / ' . $location_name;
-			$location_id = $locations[$location_id]['parent_id'];
-		}
-		$row_name = $location_name . $rack['row_name'];
+		$trail = getLocationTrail ($rack['location_id'], FALSE);
+		if(!empty ($trail))
+			$row_name = $trail . ' : ' . $rack['row_name'];
+		else
+			$row_name = $rack['row_name'];
 		$rdata[$row_name][$rack['id']] = $rack['name'];
 	}
 	echo "<select style='width:100%;' name=${sname} multiple size=" . getConfigVar ('MAXSELSIZE') . " onchange='getElementsByName(\"updateObjectAllocation\")[0].submit()'>\n";
@@ -1723,8 +1721,10 @@ function renderPortsForObject ($object_id)
 
 		printOpFormIntro ('editPort', array ('port_id' => $port['id']),false,'form-flush');
 		$a_class = isEthernetPort ($port) ? 'port-menu' : '';
-		echo "<td class='tdleft' NOWRAP><input type=text name=name class='input-small input-flush interactive-portname $a_class' value='${port['name']}' size=8></td>";
+
+		echo "<td class='tdleft' NOWRAP><input type=text name='port-${port['id']}' class='input-small input-flush interactive-portname $a_class' value='${port['name']}' size=8></td>";
 		echo "<td><input class='input-block-level input-flush' type=text name=label value='${port['label']}'></td>";
+
 		if (! $port['linked'])
 		{
 			echo '<td>';
@@ -6461,6 +6461,19 @@ function showPathAndSearch ($pageno, $tabno)
 		$item .= $ancor_tail;
 		$item .= '">' . $title['name'] . '</a></li>';
 		$items[] = $item;
+
+		// location bread crumbs insert for Rows and Racks
+		if ($no == 'row')
+		{
+			$trail = getLocationTrail ($title['params']['location_id']);
+			if(!empty ($trail))
+				$items[] = $trail;
+		}
+		if($no == 'location')
+		{
+			// overwrite the bread crumb for current location with whole path
+			$items[count ($items)-1] = getLocationTrail ($title['params']['location_id']);
+		}
 	}
 	echo "<input type=hidden name=last_page value=$pageno>";
 	echo "<input type=hidden name=last_tab value=$tabno>";
@@ -6594,14 +6607,14 @@ function dynamic_title_decoder ($path_position)
 			return array
 			(
 				'name' => $rack['row_name'],
-				'params' => array ('row_id' => $rack['row_id'])
+				'params' => array ('row_id' => $rack['row_id'], 'location_id' => $rack['location_id'])
 			);
 		case 'row':
 			$row_info = getRowInfo (assertUIntArg ('row_id'));
 			return array
 			(
 				'name' => $row_info['name'],
-				'params' => array ('row_id' => $row_info['id'])
+				'params' => array ('row_id' => $row_info['id'], 'location_id' => $row_info['location_id'])
 			);
 		default:
 			break;
