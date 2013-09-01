@@ -33,7 +33,10 @@ h1, h2, h3, h4, h5, h6 {
 
 .box .box-header .box-toolbar > li, .box .box-footer .box-toolbar > li {
 	padding-top: 6px;
+	line-height: 0px;
 }
+
+
 
 .table th {
 	padding: 3px;
