@@ -581,6 +581,46 @@ function renderEditAttrMapForm ()
 	finishPortlet();
 }
 
+function renderAttrConstraintsForm()
+{
+dump (getAttributeValueConstraints());
+	global $attr_constraint;
+	$coptions = array();
+	foreach ($attr_constraint as $constr_code => $each)
+		$coptions[$constr_code] = stringForOption ($each['text']);
+	$aoptions = getAttributeOptions (getAttrMap());
+	function printNewItemTR ($aoptions, $coptions)
+	{
+		printOpFormIntro ('add');
+		echo '<tr>';
+		echo '<td>' . getImageHREF ('add', 'add a new constraint', TRUE) . '</td>';
+		echo '<td>' . getSelect ($aoptions, array ('name' => 'attr_id')) . '</td>';
+		echo '<td><input type=text name=filter_text></td>';
+		echo '<td>' . getSelect ($coptions, array ('name' => 'constr_code')) . '</td>';
+		echo '<td>' . getImageHREF ('add', 'add a new constraint', TRUE) . '</td>';
+		echo '</tr></form>';
+	}
+	echo '<table cellspacing=0 cellpadding=5 align=center class=widetable>';
+	echo '<tr><th>&nbsp;</th><th>attribute</th><th>filter (empty for all objects)</th><th>constraint</th><th>&nbsp;</th></tr>';
+	if (getConfigVar ('ADDNEW_AT_TOP') == 'yes')
+		printNewItemTR ($aoptions, $coptions);
+	foreach (getAttributeValueConstraints() as $each)
+	{
+		printOpFormIntro ('upd', array ('id' => $each['id']));
+		echo '<tr><td>';
+		echo getOpLink (array ('op' => 'del', 'id' => $each['id']), '', 'delete', 'delete this constraint');
+		echo '</td>';
+		echo '<td>' . getSelect ($aoptions, array ('name' => 'attr_id'), $each['attr_id']) . '</td>';
+		echo '<td><input type=text name=filter_text value="' . stringForTextInputValue ($each['filter_text']) . '"></td>';
+		echo '<td>' . getSelect ($coptions, array ('name' => 'constr_code'), $each['constr_code']) . '</td>';
+		echo '<td>' . getImageHREF ('save', 'update this constraint', TRUE) . '</td>';
+		echo '</tr></form>';
+	}
+	if (getConfigVar ('ADDNEW_AT_TOP') != 'yes')
+		printNewItemTR ($aoptions, $coptions);
+	echo '</table>';
+}
+
 function renderDictionary ()
 {
 	echo '<ul>';

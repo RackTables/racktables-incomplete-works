@@ -161,6 +161,16 @@ $expirations[24] = $expirations[21];
 
 $natv4_proto = array ('TCP' => 'TCP', 'UDP' => 'UDP', 'ALL' => 'ALL');
 
+// Attribute constraint validation map. Array key is `AttributeValueConstraint.constr_code`.
+$attr_constraint = array
+(
+	'not_empty' => array
+	(
+		'text' => 'value not empty',
+		'function' => 'attrConstrValueNotEmpty',
+	),
+);
+
 $log_messages = array(); // messages waiting for displaying
 
 function defineIfNotDefined ($constant, $value, $case_insensitive = FALSE)
@@ -405,6 +415,11 @@ function genericAssertion ($argname, $argtype)
 		return $sic[$argname];
 	case 'enum/yesno':
 		if (! in_array ($sic[$argname], array ('yes', 'no')))
+			throw new InvalidRequestArgException ($argname, $sic[$argname], 'Unknown value');
+		return $sic[$argname];
+	case 'enum/attrconstr':
+		global $attr_constraint;
+		if (! array_key_exists ($sic[$argname], $attr_constraint))
 			throw new InvalidRequestArgException ($argname, $sic[$argname], 'Unknown value');
 		return $sic[$argname];
 	case 'iif':
@@ -6517,6 +6532,48 @@ function syncObjectPorts ($objectInfo, $desiredPorts)
 	$dbxlink->commit();
 
 	showSuccess ("Added ports: {$added}, changed: {$changed}, deleted: {$deleted}");
+}
+
+function attrConstrValueNotEmpty ($attr_id, $attr_new_value)
+{
+	$map = getAttrMap();
+	if (! array_key_exists ($attr_id, $map))
+		throw new InvalidArgException ('attr_id', $attr_id, 'unknown attribute');
+	$type = $map[$attr_id]['type'];
+	switch ($type)
+	{
+		case 'string':
+		case 'uint':
+		case 'float':
+		case 'date':
+			return $attr_new_value != '';
+		case 'dict':
+			return is_int ($attr_new_value) && $attr_new_value > 0;
+		default:
+			throw new RackTablesError ("Unexpected attribute type '${type}'", RackTablesError::INTERNAL);
+	}
+}
+
+function checkConstraintsForObjectAttribute ($avc, $object, $attr_id, $attr_val)
+{
+	global $attr_constraint;
+	foreach ($avc as $each)
+		if
+		(
+			$each['attr_id'] == $attr_id &&
+			$each['filter_code'] !== NULL &&
+			TRUE === judgeCell ($object, $each['filter_code'])
+		)
+		{
+			if (! array_key_exists ($each['constr_code'], $attr_constraint))
+				throw new InvalidArgException ('constr_code', $each['constr_code'], 'unknown constraint code');
+			$funcname = $attr_constraint[$each['constr_code']]['function'];
+			if (! is_callable ($funcname))
+				throw new InvalidArgException ('function', $funcname, 'constraint function is defined but is not callable');
+			if (! $funcname ($attr_id, $attr_value))
+				return FALSE;
+		}
+	return TRUE;
 }
 
 ?>

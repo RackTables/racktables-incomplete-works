@@ -1940,6 +1940,16 @@ VALUES ('SHOW_OBJECTTYPE',  'no',  'string',  'no',  'no',  'yes',  'Show object
 			$query[] = "DELETE FROM Script WHERE script_name='RackCodeCache'";
 
 			$query[] = "INSERT INTO Config (varname, varvalue, is_hidden, is_userdefined, description) VALUES ('IPV4_TREE_SHOW_UNALLOCATED', 'yes', 'no', 'yes', 'Show unallocated networks in IPv4 tree'); ";
+			$query[] = "
+CREATE TABLE `AttributeValueConstraint` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `attr_id` int(10) unsigned NOT NULL,
+  `constr_code` char(32) NOT NULL,
+  `filter_text` char(255) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `attr_id-constr_code` (`attr_id`,`constr_code`),
+  CONSTRAINT `AttributeValueConstraint-FK-attr_id` FOREIGN KEY (`attr_id`) REFERENCES `Attribute` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8";
 			$query[] = "UPDATE Config SET varvalue = '0.20.11' WHERE varname = 'DB_VERSION'";
 
 			break;

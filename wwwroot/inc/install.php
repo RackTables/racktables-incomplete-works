@@ -536,6 +536,16 @@ function get_pseudo_file ($name)
   CONSTRAINT `AttributeValue-FK-object` FOREIGN KEY (`object_id`, `object_tid`) REFERENCES `Object` (`id`, `objtype_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB";
 
+		$query[] = "CREATE TABLE `AttributeValueConstraint` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `attr_id` int(10) unsigned NOT NULL,
+  `constr_code` char(32) NOT NULL,
+  `filter_text` char(255) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `attr_id-constr_code` (`attr_id`,`constr_code`),
+  CONSTRAINT `AttributeValueConstraint-FK-attr_id` FOREIGN KEY (`attr_id`) REFERENCES `Attribute` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB";
+
 		$query[] = "CREATE TABLE `CachedPAV` (
   `object_id` int(10) unsigned NOT NULL,
   `port_name` char(255) NOT NULL,

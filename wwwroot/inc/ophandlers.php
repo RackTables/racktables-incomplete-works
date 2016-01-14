@@ -723,6 +723,41 @@ $opspec_list['cableconf-oifcompat-del'] = array
 		array ('url_argname' => 'oif_id', 'assertion' => 'uint'),
 	),
 );
+$opspec_list['attrs-constraints-add'] = array
+(
+	'table' => 'AttributeValueConstraint',
+	'action' => 'INSERT',
+	'arglist' => array
+	(
+		array ('url_argname' => 'attr_id', 'assertion' => 'uint'),
+		array ('url_argname' => 'constr_code', 'assertion' => 'enum/attrconstr'),
+		array ('url_argname' => 'filter_text', 'assertion' => 'rackcode/expr'),
+	),
+);
+$opspec_list['attrs-constraints-del'] = array
+(
+	'table' => 'AttributeValueConstraint',
+	'action' => 'DELETE',
+	'arglist' => array
+	(
+		array ('url_argname' => 'id', 'assertion' => 'uint'),
+	),
+);
+$opspec_list['attrs-constraints-upd'] = array
+(
+	'table' => 'AttributeValueConstraint',
+	'action' => 'UPDATE',
+	'set_arglist' => array
+	(
+		array ('url_argname' => 'attr_id', 'assertion' => 'uint'),
+		array ('url_argname' => 'constr_code', 'assertion' => 'enum/attrconstr'),
+		array ('url_argname' => 'filter_text', 'assertion' => 'rackcode/expr'),
+	),
+	'where_arglist' => array
+	(
+		array ('url_argname' => 'id', 'assertion' => 'uint'),
+	),
+);
 
 function setFuncMessages ($funcname, $messages)
 {

@@ -3855,6 +3855,30 @@ function commitUpdateAttrValue ($object_id, $attr_id, $value = '')
 		);
 }
 
+/*
+INSERT INTO `AttributeValueConstraint` (`id`, `attr_id`, `constr_code`, `filter_text`) VALUES
+(1,27,'not_empty','{t} and {u}'),
+(2,3,'not_empty','[a predicate]'),
+(3,20,'not_empty','{oem2}'),
+(4,29,'not_empty','{sortable}'),
+(5,4,'not_empty','[runs software]');
+*/
+function getAttributeValueConstraints()
+{
+	$ret = array();
+	$result = usePreparedSelectBlade
+	(
+		'SELECT id, attr_id, constr_code, filter_text FROM AttributeValueConstraint ' .
+		'ORDER BY attr_id, constr_code'
+	);
+	while ($row = $result->fetch (PDO::FETCH_ASSOC))
+	{
+		$row['filter_code'] = compileExpression ($row['filter_text']);
+		$ret[] = $row;
+	}
+	return $ret;
+}
+
 function convertPDOException ($e)
 {
 	switch ($e->getCode() . '-' . $e->errorInfo[1])

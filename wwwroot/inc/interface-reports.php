@@ -735,6 +735,7 @@ function renderDataIntegrityReport ()
 		'AttributeMap-FK-attr_id' => 'AttributeMap',
 		'AttributeValue-FK-map' => 'AttributeValue',
 		'AttributeValue-FK-object' => 'AttributeValue',
+		'AttributeValueConstraint-FK-attr_id' => 'AttributeValueConstraint',
 		'CachedPAV-FK-object-port' => 'CachedPAV',
 		'CachedPAV-FK-vlan_id' => 'CachedPAV',
 		'CachedPNV-FK-compound' => 'CachedPNV',
