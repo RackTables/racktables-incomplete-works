@@ -1249,7 +1249,7 @@ CREATE TABLE `Plugin` (
 			// if the Cacti or Munin plugins are being used, mark them as enabled, otherwise uninstall them
 			// from now on, upgrades will be handled by the plugins themselves
 			$result = $dbxlink->query ('SELECT COUNT(*) FROM CactiServer');
-			if ($result->fetch (PDO::FETCH_COLUMN, 0) > 0)
+			if ($result->fetchColumn() > 0)
 				$query[] = "INSERT INTO Plugin VALUES ('cacti','Cacti','1.0','http://www.racktables.org/','enabled')";
 			else
 			{
@@ -1259,7 +1259,7 @@ CREATE TABLE `Plugin` (
 			}
 			unset ($result);
 			$result = $dbxlink->query ('SELECT COUNT(*) FROM MuninServer');
-			if ($result->fetch (PDO::FETCH_COLUMN, 0) > 0)
+			if ($result->fetchColumn() > 0)
 				$query[] = "INSERT INTO Plugin VALUES ('munin','Munin','1.0','http://www.racktables.org/','enabled')";
 			else
 			{
