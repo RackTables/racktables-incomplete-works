@@ -251,7 +251,7 @@ function init_config ()
 	fwrite ($conf, <<<ENDOFTEXT
 # Set this if you need to override the default plugins directory.
 #\$racktables_plugins_dir = '/path/to/plugins';
-			
+
 # Setting MySQL client buffer size may be required to make downloading work for
 # larger files, but it does not work with mysqlnd.
 # \$pdo_bufsize = 50 * 1024 * 1024;

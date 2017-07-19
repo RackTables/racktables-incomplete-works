@@ -1600,7 +1600,7 @@ function resetUIConfig()
 	);
 	foreach ($defaults as $name => $value)
 		setConfigVar ($name, $value);
-	callHook ('resetUIConfig_hook'); 
+	callHook ('resetUIConfig_hook');
 	showFuncMessage (__FUNCTION__, 'OK');
 }
 
